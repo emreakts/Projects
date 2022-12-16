@@ -1,5 +1,3 @@
-﻿Console.WriteLine(" **** 22.Ders_uygulama **** ");
-
 bool isasal = true ;
 
 System.Console.Write(" Bir Sayi Giriniz : ");
