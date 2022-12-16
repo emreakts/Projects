@@ -1,8 +1,7 @@
 ﻿Console.WriteLine(" **** 23.Ders **** ");
 
-int tutulan = (new Random().Next(1,100));
+int tutulan = (new Random().Next(1,10));
 int hak = 5;
-System.Console.WriteLine(tutulan);
 while (hak>0)
 {
     System.Console.WriteLine("Bir Sayi Giriniz : ");
