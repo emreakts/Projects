@@ -1,5 +1,3 @@
-﻿Console.WriteLine(" **** 23.Ders **** ");
-
 int tutulan = (new Random().Next(1,10));
 int hak = 5;
 while (hak>0)
