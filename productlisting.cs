@@ -1,3 +1,5 @@
+﻿Console.WriteLine(" **** 20.ders **** ");
+
 Console.Write("Adet Sayisi Giriniz :");
  int adet = int.Parse(Console.ReadLine());
 
