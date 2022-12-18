@@ -1,22 +1,24 @@
-int tutulan = (new Random().Next(1,10));
-int hak = 5;
+int tutulan = (new Random().Next(1,100));
+int hak = 2;
+System.Console.WriteLine(tutulan);
 while (hak>0)
 {
-    System.Console.WriteLine("Bir Sayi Giriniz : ");
+    System.Console.Write("Bir Sayi Giriniz : ");
     int sayi = int.Parse(Console.ReadLine());
+    hak--;
     if (sayi == tutulan)
     {
-        System.Console.WriteLine("Tahmininiz Doğru.Tebrikler !! ");
+        System.Console.Write("Tahmininiz Doğru.Tebrikler !! ");
         break;
     }
     else
         {
-        System.Console.WriteLine(" Tekrar Deneyiniz ");
+        if (hak==0)
+            break;
         if (tutulan>sayi)
-            System.Console.WriteLine("Daha Büyük Sayi Tahmin Ediniz :");    
+            System.Console.WriteLine("Daha Büyük Sayi Tahmin Ediniz ");    
         else
-             System.Console.WriteLine("Daha Düşük Sayi Tahmin Ediniz : ");
+             System.Console.WriteLine("Daha Düşük Sayi Tahmin Ediniz ");
         }
-        hak--;
 }
-    
+    System.Console.Write("Hakkiniz Bitmistir.");
