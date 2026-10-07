@@ -36,8 +36,12 @@ kendi yol haritası, ürün kriterleri ve hesaplama araçları vardır.
 3. **Token'ı al:** Telegram'da [@BotFather](https://t.me/BotFather) → `/mybots` → botun → *API Token* → kopyala.
 4. **Başlat:** `eticaret-bot` klasöründe
    - Windows: **`baslat.bat`** dosyasına çift tıkla
-   - macOS: **`baslat.command`** dosyasına çift tıkla (ilk seferde sağ tık → *Aç*)
+   - macOS: Terminal'i aç, `bash ` yaz (sonunda boşluk), **`baslat.command`** dosyasını Terminal
+     penceresine sürükle ve Enter'a bas. (Çift tıklarsan macOS "doğrulanamadı" uyarısı verir;
+     o zaman *Sistem Ayarları → Gizlilik ve Güvenlik → Yine de Aç* ile izin vermen gerekir.)
 5. İlk açılışta kurulum birkaç dakika sürer, sonra token'ı sorar: yapıştır, Enter'a bas.
+   macOS "komut satırı geliştirici araçları" kurmayı önerirse Python kurulu değil demektir:
+   *Yükle* de veya Python'u python.org'dan kur, sonra tekrar başlat.
 6. "Bot çalışıyor" yazısını görünce Telegram'da botuna `/start` yaz.
 
 Pencere açık kaldığı sürece bot çalışır. Token'ı değiştirmek için `.env` dosyasını silip tekrar başlat.
