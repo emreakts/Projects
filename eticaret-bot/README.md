@@ -58,6 +58,17 @@ pip install -r requirements.txt
 python -m eticaret_bot
 ```
 
+### Profil animasyonu
+
+`assets/avatar.mp4`: "EA SHOPPING" logosu; E'nin orta çizgisi ile A'nın yatay çizgisinden kalp atışı
+(EKG) sinyali geçer. Botun profil fotoğrafı yapmak için `eticaret-bot` klasöründe:
+
+```bash
+.venv/bin/python -m eticaret_bot.set_avatar
+```
+
+Animasyonu yeniden üretmek için: `python tools/make_avatar.py` (Pillow ve ffmpeg gerekir).
+
 ### 7/24 çalıştırma (sunucu)
 
 Bilgisayarın kapanınca bot da durur. Sürekli açık kalması için bir sunucuda (VPS) Docker ile çalıştır:
