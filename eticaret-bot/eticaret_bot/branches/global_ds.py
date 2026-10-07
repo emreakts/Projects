@@ -5,11 +5,10 @@ Türkiye'den yönetilen, ABD / UK / AB / CA / AU müşterilerine satış yapan m
 
 from ..calc import ad_test, global_profit
 from ..core.branch import Branch, Field, FormTool
-from ..core.roadmap import make_stage
 from ..core.scoring import Criterion
 from ..formatting import fmt_num, fmt_pct, fmt_usd
+from .global_roadmap import BRANCH_ID, STAGES
 
-BRANCH_ID = "c"
 
 SUMMARY = (
     "🅲 <b>Global Dropshipping</b>\n\n"
@@ -24,132 +23,6 @@ SUMMARY = (
     "DDP (vergiler dahil) gönderim veya ABD deposu şart.\n"
     "• AB, 1 Temmuz 2026'dan beri 150 € altı gönderilerde ürün başına 3 € gümrük alıyor.\n\n"
     "Gümrük oranları sık değişiyor, tedarikçiden her ürün için güncel DDP fiyatı iste."
-)
-
-STAGES = (
-    make_stage(
-        BRANCH_ID,
-        "pazar",
-        "1️⃣ Hedef Pazar ve Bütçe",
-        "Test edilen ürünlerin çoğu tutmaz; bütçeni 3-5 ürün testine yetecek şekilde planla. "
-        "ABD en büyük pazar ama gümrük maliyeti en yüksek olanlardan; UK, CA ve AU iyi alternatifler.",
-        [
-            "Hedef pazarı seç (ABD, UK, AB, CA, AU) ve o pazarın gümrük kuralını öğren",
-            "Mağaza tipine karar ver: tek ürün, niş mağaza veya genel mağaza (öneri: niş)",
-            "Test bütçesi ayır: ürün başına en az 300-500 $ reklam + 2-3 aylık sabit giderler",
-            "Mali müşavirle, yurt dışı şirket kazancının Türkiye'de nasıl beyan edileceğini konuş",
-        ],
-    ),
-    make_stage(
-        BRANCH_ID,
-        "sirket",
-        "2️⃣ Yurt Dışı Şirket ve Ödeme",
-        "En yaygın yol: ABD LLC (Wyoming, Delaware, New Mexico) + EIN + şirket adına ABD banka hesabı "
-        "+ Stripe. Shopify Payments reddedilirse üçüncü taraf ödeme sağlayıcısı kullanılır; Shopify bu "
-        "durumda plana göre ek işlem ücreti keser. Şirket kurma servisleri (Stripe Atlas, doola, Firstbase vb.) "
-        "süreci kolaylaştırır.",
-        [
-            "Şirket ülkesini seç (ABD LLC veya UK Ltd)",
-            "Şirketi kur (kendin veya şirket kurma servisiyle)",
-            "EIN al (SSN yoksa IRS'e SS-4 formuyla telefon/faks veya servis üzerinden)",
-            "Şirket adına banka hesabı aç (Mercury, Relay, Wise Business vb.)",
-            "Ödeme sağlayıcısına başvur (Shopify Payments, Stripe, PayPal Business)",
-            "Kazancı Türkiye'ye aktarma ve beyan yöntemini netleştir",
-            "Satış vergisi (ABD sales tax) ve AB KDV (IOSS) yükümlülüklerini kontrol et",
-        ],
-    ),
-    make_stage(
-        BRANCH_ID,
-        "urun",
-        "3️⃣ Ürün Araştırması",
-        "Kazanan ürün: ilk bakışta 'vay' dedirtir veya net bir sorunu çözer, mağazalarda kolay bulunmaz, "
-        "maliyetinin en az 3 katına satılır, 25-70 $ aralığındadır, hafiftir ve markalı değildir. "
-        "Kaynaklar: Meta Ad Library, TikTok Creative Center, CJ/AliExpress trend listeleri, ürün casusu araçları.",
-        [
-            "Meta Ad Library ve TikTok'ta son 30 günde artan reklamları tara",
-            "20 aday ürün listesi çıkar",
-            "Her adayı 🔍 Ürün Analizi ile puanla",
-            "En iyi 3-5 adayın 💵 Kâr Hesabını yap (gümrük dahil)",
-            "Rakip mağazaları incele: fiyat, teklif, ürün sayfası, yorumlar",
-        ],
-    ),
-    make_stage(
-        BRANCH_ID,
-        "tedarik",
-        "4️⃣ Tedarikçi ve Kargo",
-        "CJ Dropshipping (kendi depoları, ABD deposu, DDP gönderim), DSers (AliExpress), AutoDS, Zendrop, "
-        "Spocket (ABD/AB depolu tedarikçiler). Gümrük artık her pakete uygulandığı için DDP gönderim veya "
-        "hedef ülke deposu seç; yoksa müşteri kapıda vergi öder, iade ve chargeback patlar.",
-        [
-            "En az 2 tedarikçiden ürün + kargo fiyatı ve teslim süresi al",
-            "Gönderimin DDP olduğunu ve gümrük maliyetini yazılı teyit et",
-            "Test siparişi ver: kalite, paketleme, teslim süresi",
-            "Pakette fiyat, fatura veya tedarikçi logosu olmamasını sağla",
-            "Ürün tutarsa özel ajan veya ABD depo stoğu seçeneğini araştır",
-        ],
-    ),
-    make_stage(
-        BRANCH_ID,
-        "magaza",
-        "5️⃣ Shopify Mağaza",
-        "Müşteri markanı tanımıyor; güveni sayfa kazanır. Net kargo süresi, açık iade politikası, "
-        "gerçek iletişim bilgisi ve güçlü ürün sayfası şart.",
-        [
-            "Shopify hesabı aç ve plan seç",
-            "Alan adı al, profesyonel e-posta kur",
-            "Hızlı bir tema kur ve marka kimliğini (logo, renk) hazırla",
-            "Zorunlu sayfalar: Refund, Shipping, Privacy, Terms, Contact, About",
-            "Ürün sayfası: fayda başlıkları, GIF/video, karşılaştırma, SSS, yorumlar",
-            "Tedarikçi uygulamasını bağla (CJ, DSers, AutoDS) ve ürünü içe aktar",
-            "Fiyat, karşılaştırma fiyatı ve paket/upsell teklifini ayarla",
-            "Ödeme ve kargo ayarlarını yap, uçtan uca test siparişi ver",
-        ],
-    ),
-    make_stage(
-        BRANCH_ID,
-        "reklam",
-        "6️⃣ Reklam ve Test",
-        "Video reklam ana silah. Ürün başına 3-5 farklı kreatifle, günlük 20-50 $ bütçeyle test et. "
-        "Karar için 📊 Reklam Testi aracını her gün kullan; başa baş CPA'nın 2-3 katı harcayıp satış "
-        "alamayan reklamı kapat.",
-        [
-            "Meta Business, reklam hesabı, Pixel ve Conversions API kur",
-            "TikTok Ads hesabı ve Pixel kur (opsiyonel)",
-            "3-5 farklı video kreatif hazırla (farklı hook'lar, UGC tarzı)",
-            "💵 Kâr Hesabı ile başa baş CPA ve ROAS'ı öğren",
-            "Test kampanyasını aç (geniş hedefleme, satın alma optimizasyonu)",
-            "Her gün 📊 Reklam Testi ile kapat / devam / ölçekle kararı ver",
-        ],
-    ),
-    make_stage(
-        BRANCH_ID,
-        "operasyon",
-        "7️⃣ Sipariş ve Müşteri Hizmetleri",
-        "Yüksek iade ve chargeback oranı ödeme hesabını kapattırabilir. Takip numarasını hızlı yükle, "
-        "sorulara 24 saat içinde dön, sorunlu siparişi tartışmadan çöz.",
-        [
-            "Otomatik sipariş iletimini (auto-fulfill) aç",
-            "Takip numarası senkronunu ve sipariş takip sayfasını kur",
-            "Destek şablonları hazırla: kargo nerede, iade, hasarlı ürün",
-            "Hasar/kayıp sürecini tedarikçiyle netleştir (fotoğrafla yeniden gönderim)",
-            "Chargeback ve dispute'ları haftalık kontrol et",
-        ],
-    ),
-    make_stage(
-        BRANCH_ID,
-        "olcek",
-        "8️⃣ Ölçekleme ve Marka",
-        "Kazanan ürünü bulunca sırayla: bütçeyi artır, yeni kreatif ve kitle ekle, sepet ortalamasını "
-        "yükselt, sonra tedariki ve markayı güçlendir.",
-        [
-            "Kazanan reklam setinin bütçesini 2-3 günde bir %20-30 artır",
-            "Yeni kreatif, yeni ülke ve yeni kanal ile yatay büyü",
-            "Sepet ortalamasını artır: paket, upsell, satın alma sonrası teklif",
-            "E-posta/SMS akışları kur (sepet terk, satın alma sonrası)",
-            "Toplu stokla ABD deposuna geç, teslim süresini kısalt",
-            "Markalı ambalaj veya private label'a geç",
-        ],
-    ),
 )
 
 CRITERIA = (

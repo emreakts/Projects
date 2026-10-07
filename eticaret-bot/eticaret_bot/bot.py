@@ -5,8 +5,9 @@ Callback verisi şeması:
   br:<dal>                dal ana sayfası
   rm:<dal>                dal yol haritası
   st:<aşama id>           aşama görünümü (ör. st:c.sirket)
-  tg:<görev id>           görevi işaretle / kaldır
-  next:<dal>              sıradaki adım
+  tk:<görev id>           görev detayı ve "nasıl yapılır" rehberi
+  tg:<görev id>           görevin işaretini kaldır / koy
+  guide:<dal>             adım adım rehber: ilk tamamlanmamış görev
   done:<görev id>         görevi tamamla ve sıradakine geç
   ps:<dal>                ürün analizini başlat
   pa:<kriter>:<puan>      ürün analizi cevabı
@@ -88,7 +89,8 @@ HELP = (
     "/a, /b, /c: İlgili dropshipping dalına git\n"
     "/iptal: Devam eden analizi/hesabı iptal et\n"
     "/sifirla: Tüm yol haritası ilerlemeni sıfırla\n\n"
-    "Her dalda: 🗺 Yol Haritası, 📍 Sıradaki Adım, 🔍 Ürün Analizi ve dala özel hesaplama araçları var."
+    "Her dalda: 🧭 Adım Adım Rehber, 🗺 Yol Haritası, 🔍 Ürün Analizi ve dala özel hesaplama araçları var.\n"
+    "Rehber seni ilk tamamlanmamış adıma götürür ve her adımın nasıl yapılacağını anlatır."
 )
 
 
@@ -121,7 +123,8 @@ def _branch_home(branch: Branch) -> InlineKeyboardMarkup:
     if not branch.ready:
         return InlineKeyboardMarkup([_nav()])
     rows = [
-        [Btn("🗺 Yol Haritası", callback_data=f"rm:{branch.id}"), Btn("📍 Sıradaki Adım", callback_data=f"next:{branch.id}")],
+        [Btn("🧭 Adım Adım Rehber", callback_data=f"guide:{branch.id}")],
+        [Btn("🗺 Yol Haritası", callback_data=f"rm:{branch.id}")],
         [Btn("🔍 Ürün Analizi", callback_data=f"ps:{branch.id}")],
     ]
     tool_buttons = [Btn(t.button, callback_data=f"fm:{branch.id}:{t.id}") for t in branch.tools]
@@ -142,7 +145,7 @@ def _branch_command(branch_id: str):
     return handler
 
 
-# ---------- Yol haritası ----------
+# ---------- Yol haritası ve adım adım rehber ----------
 
 async def show_roadmap(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     branch = BRANCHES[_arg(update)]
@@ -166,26 +169,93 @@ def _stage_view(branch: Branch, stage: roadmap.Stage, done: set[str]) -> tuple[s
     d, n = roadmap.stage_progress(stage, done)
     text = (
         f"<b>{stage.title}</b>\n{roadmap.progress_bar(d, n)}\n\n"
-        f"💡 {stage.guide}\n\n"
-        "Tamamladığın adımlara dokunarak işaretle:"
+        f"💡 {html.escape(stage.guide, quote=False)}\n\n"
+        "Detaylı rehberini görmek için bir adıma dokun:"
     )
     rows = [
-        [Btn(("✅ " if t.id in done else "⬜ ") + t.text, callback_data=f"tg:{t.id}")]
+        [Btn(("✅ " if t.id in done else "⬜ ") + t.text, callback_data=f"tk:{t.id}")]
         for t in stage.tasks
     ]
     rows.append([Btn("⬅️ Yol Haritası", callback_data=f"rm:{branch.id}"), Btn("🏠 Ana Menü", callback_data="menu")])
     return text, InlineKeyboardMarkup(rows)
 
 
-async def _render_stage(update: Update, context: ContextTypes.DEFAULT_TYPE, stage_id: str) -> None:
+async def show_stage(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    stage_id = _arg(update)
     branch = BRANCHES[stage_id.split(".", 1)[0]]
     stage = roadmap.find_stage(branch.stages, stage_id)
     text, markup = _stage_view(branch, stage, _storage(context).done_tasks(update.effective_user.id))
     await _reply(update, text, markup)
 
 
-async def show_stage(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await _render_stage(update, context, _arg(update))
+def _tool_shortcuts(branch: Branch, task: roadmap.Task) -> list[Btn]:
+    """Görev metninde adı geçen araçlara kısayol butonları."""
+    content = " ".join((task.text, *task.how))
+    buttons = []
+    if "Ürün Analizi" in content and branch.criteria:
+        buttons.append(Btn("🔍 Ürün Analizi", callback_data=f"ps:{branch.id}"))
+    buttons += [Btn(t.button, callback_data=f"fm:{branch.id}:{t.id}") for t in branch.tools if t.button in content]
+    return buttons
+
+
+def task_view(branch: Branch, task_id: str, done: set[str]) -> tuple[str, InlineKeyboardMarkup]:
+    stage, task = roadmap.find_task(branch.stages, task_id)
+    position = stage.tasks.index(task) + 1
+    ids = roadmap.task_ids(branch.stages)
+    is_done = task.id in done
+
+    lines = [
+        f"🧭 <b>{stage.title}</b> · Adım {position}/{len(stage.tasks)}\n",
+        f"{'✅' if is_done else '👉'} <b>{html.escape(task.text, quote=False)}</b>\n",
+    ]
+    if task.how:
+        lines.append("📋 <b>Nasıl yapılır</b>")
+        lines += [f"{i}. {html.escape(step, quote=False)}" for i, step in enumerate(task.how, 1)]
+    else:
+        lines.append(f"💡 {html.escape(stage.guide, quote=False)}")
+    lines.append(f"\nGenel ilerleme: {roadmap.progress_bar(sum(t in done for t in ids), len(ids))}")
+
+    if is_done:
+        rows = [[Btn("↩️ Tamamlanmadı olarak işaretle", callback_data=f"tg:{task.id}")]]
+    else:
+        rows = [[Btn("✅ Tamamladım, sıradakine geç", callback_data=f"done:{task.id}")]]
+    shortcuts = _tool_shortcuts(branch, task)
+    if shortcuts:
+        rows.append(shortcuts)
+    prev_id, next_id = roadmap.neighbors(branch.stages, task.id)
+    nav = []
+    if prev_id:
+        nav.append(Btn("⬅️ Önceki", callback_data=f"tk:{prev_id}"))
+    if next_id:
+        nav.append(Btn("Sonraki ➡️", callback_data=f"tk:{next_id}"))
+    if nav:
+        rows.append(nav)
+    rows.append([Btn("📂 Aşama", callback_data=f"st:{stage.id}"), Btn("🗺 Yol Haritası", callback_data=f"rm:{branch.id}")])
+    rows.append(_nav(branch))
+    return "\n".join(lines), InlineKeyboardMarkup(rows)
+
+
+async def _render_task(update: Update, context: ContextTypes.DEFAULT_TYPE, task_id: str) -> None:
+    done = _storage(context).done_tasks(update.effective_user.id)
+    text, markup = task_view(branch_of_task(task_id), task_id, done)
+    await _reply(update, text, markup)
+
+
+async def _render_guide(update: Update, context: ContextTypes.DEFAULT_TYPE, branch: Branch) -> None:
+    nxt = roadmap.next_task(branch.stages, _storage(context).done_tasks(update.effective_user.id))
+    if nxt is None:
+        text = f"🎉 {branch.title} yol haritasını tamamladın! Ölçekleme adımlarını haftalık tekrarla."
+        await _reply(update, text, InlineKeyboardMarkup([[Btn("🗺 Yol Haritası", callback_data=f"rm:{branch.id}")], _nav(branch)]))
+        return
+    await _render_task(update, context, nxt[1].id)
+
+
+async def show_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    task_id = _arg(update)
+    if task_id not in ALL_TASK_IDS:
+        await update.callback_query.answer("Bu adım artık yok.")
+        return
+    await _render_task(update, context, task_id)
 
 
 async def toggle_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -194,29 +264,11 @@ async def toggle_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         await update.callback_query.answer("Bu adım artık yok.")
         return
     _storage(context).toggle_task(update.effective_user.id, task_id)
-    await _render_stage(update, context, task_id.rsplit(".", 1)[0])
+    await _render_task(update, context, task_id)
 
 
-async def _render_next(update: Update, context: ContextTypes.DEFAULT_TYPE, branch: Branch) -> None:
-    nxt = roadmap.next_task(branch.stages, _storage(context).done_tasks(update.effective_user.id))
-    if nxt is None:
-        text = f"🎉 {branch.title} yol haritasını tamamladın! Ölçekleme adımlarını haftalık tekrarla."
-        await _reply(update, text, InlineKeyboardMarkup([_nav(branch)]))
-        return
-    stage, task = nxt
-    text = f"📍 <b>Sıradaki adımın</b>\n\n<b>{stage.title}</b>\n👉 {task.text}\n\n💡 {stage.guide}"
-    markup = InlineKeyboardMarkup(
-        [
-            [Btn("✅ Bunu tamamladım", callback_data=f"done:{task.id}")],
-            [Btn("📂 Aşamaya git", callback_data=f"st:{stage.id}")],
-            _nav(branch),
-        ]
-    )
-    await _reply(update, text, markup)
-
-
-async def show_next(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await _render_next(update, context, BRANCHES[_arg(update)])
+async def show_guide(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _render_guide(update, context, BRANCHES[_arg(update)])
 
 
 async def complete_and_next(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -227,7 +279,7 @@ async def complete_and_next(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     storage = _storage(context)
     if task_id not in storage.done_tasks(update.effective_user.id):
         storage.toggle_task(update.effective_user.id, task_id)
-    await _render_next(update, context, branch_of_task(task_id))
+    await _render_guide(update, context, branch_of_task(task_id))
 
 
 # ---------- Ürün analizi ----------
@@ -279,7 +331,7 @@ async def ps_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     result = scoring.evaluate(branch.criteria, state["answers"])
     lines = [
-        f"🔍 <b>{html.escape(state['name'])}</b> analiz sonucu\n",
+        f"🔍 <b>{html.escape(state['name'], quote=False)}</b> analiz sonucu\n",
         f"Skor: <b>{result.score}/100</b>",
         f"Karar: <b>{result.verdict}</b>",
     ]
@@ -424,15 +476,32 @@ def build_application(token: str, db_path: str) -> Application:
     app.add_handler(CallbackQueryHandler(show_branch, pattern=r"^br:\w+$"))
     app.add_handler(CallbackQueryHandler(show_roadmap, pattern=r"^rm:\w+$"))
     app.add_handler(CallbackQueryHandler(show_stage, pattern=r"^st:[\w.]+$"))
+    app.add_handler(CallbackQueryHandler(show_task, pattern=r"^tk:[\w.]+$"))
     app.add_handler(CallbackQueryHandler(toggle_task, pattern=r"^tg:[\w.]+$"))
-    app.add_handler(CallbackQueryHandler(show_next, pattern=r"^next:\w+$"))
+    app.add_handler(CallbackQueryHandler(show_guide, pattern=r"^guide:\w+$"))
     app.add_handler(CallbackQueryHandler(complete_and_next, pattern=r"^done:[\w.]+$"))
     app.add_handler(CallbackQueryHandler(stale_button))
     return app
 
 
+def load_env_file(path: str = ".env") -> None:
+    """KEY=VALUE satırlarını ortam değişkenlerine yükler; zaten tanımlı olanları ezmez."""
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+
+
 def main() -> None:
     logging.basicConfig(format="%(asctime)s %(levelname)s %(name)s: %(message)s", level=logging.INFO)
+    # httpx her Telegram isteğini token'lı URL ile loglar; token log'a sızmasın.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    load_env_file()
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
         raise SystemExit("TELEGRAM_BOT_TOKEN ortam değişkeni tanımlı değil. README'deki kuruluma bak.")

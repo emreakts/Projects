@@ -55,3 +55,52 @@ def test_validate_field_rules():
     with pytest.raises(ValueError):
         _validate(Field("x", "?", kind="pct"), "100")
     assert _validate(Field("x", "?"), "12,5") == 12.5
+
+
+def test_global_tasks_all_have_how_to():
+    b = BRANCHES["c"]
+    assert all(t.how for s in b.stages for t in s.tasks)
+
+
+@pytest.mark.parametrize("branch", READY, ids=lambda b: b.id)
+def test_task_views_fit_telegram_limits(branch):
+    from eticaret_bot.bot import task_view
+
+    ids = roadmap.task_ids(branch.stages)
+    for done in (set(), set(ids)):
+        for tid in ids:
+            text, markup = task_view(branch, tid, done)
+            assert len(text) < 4096
+            for row in markup.inline_keyboard:
+                for btn in row:
+                    assert len(btn.callback_data.encode()) <= 64
+
+
+def test_task_view_shortcuts_and_navigation():
+    from eticaret_bot.bot import task_view
+
+    b = BRANCHES["c"]
+    ids = roadmap.task_ids(b.stages)
+    first_text, first = task_view(b, ids[0], set())
+    data = [btn.callback_data for row in first.inline_keyboard for btn in row]
+    assert f"done:{ids[0]}" in data and f"tk:{ids[1]}" in data
+    assert not any(d.startswith("tk:") and d != f"tk:{ids[1]}" for d in data)  # ilk adımda "önceki" yok
+    _, kar_task = roadmap.find_task(b.stages, "c.urun.4")
+    _, markup = task_view(b, kar_task.id, {kar_task.id})
+    data = [btn.callback_data for row in markup.inline_keyboard for btn in row]
+    assert "fm:c:kar" in data and f"tg:{kar_task.id}" in data
+
+
+def test_load_env_file(tmp_path, monkeypatch):
+    from eticaret_bot.bot import load_env_file
+
+    env = tmp_path / ".env"
+    env.write_text('# yorum\nX_TEST_TOKEN="abc:123"\nX_TEST_DB=a.db\n', encoding="utf-8")
+    monkeypatch.delenv("X_TEST_TOKEN", raising=False)
+    monkeypatch.setenv("X_TEST_DB", "onceden.db")
+    load_env_file(str(env))
+    import os
+
+    assert os.environ["X_TEST_TOKEN"] == "abc:123"
+    assert os.environ["X_TEST_DB"] == "onceden.db"
+    monkeypatch.delenv("X_TEST_TOKEN")
