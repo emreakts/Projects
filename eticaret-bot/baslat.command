@@ -1,5 +1,6 @@
 #!/bin/bash
-# macOS / Linux: çift tıkla (macOS) veya terminalde ./baslat.command çalıştır.
+# macOS / Linux: Terminal'de `bash baslat.command` ile çalıştır
+# (macOS'ta çift tıklama Gatekeeper "doğrulanamadı" uyarısına takılır).
 cd "$(dirname "$0")" || exit 1
 
 if ! command -v python3 >/dev/null 2>&1; then
