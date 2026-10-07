@@ -22,6 +22,7 @@ import warnings
 from telegram import InlineKeyboardButton as Btn
 from telegram import InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
+from telegram.error import InvalidToken, NetworkError
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -505,6 +506,14 @@ def main() -> None:
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
         raise SystemExit("TELEGRAM_BOT_TOKEN ortam değişkeni tanımlı değil. README'deki kuruluma bak.")
-    app = build_application(token, os.environ.get("ETICARET_DB", "eticaret_bot.db"))
-    log.info("Bot başlatıldı")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    try:
+        app = build_application(token, os.environ.get("ETICARET_DB", "eticaret_bot.db"))
+        log.info("Bot başlatılıyor... Durdurmak için Ctrl+C")
+        app.run_polling(allowed_updates=Update.ALL_TYPES)
+    except InvalidToken:
+        raise SystemExit(
+            "❌ Token geçersiz. BotFather'da /mybots → botun → API Token ile token'ı tekrar kopyala, "
+            ".env dosyasındaki TELEGRAM_BOT_TOKEN satırına boşluksuz yapıştır."
+        ) from None
+    except NetworkError as e:
+        raise SystemExit(f"❌ Telegram'a bağlanılamadı ({e}). İnternet bağlantını kontrol et.") from None

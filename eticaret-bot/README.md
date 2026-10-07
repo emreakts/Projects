@@ -27,29 +27,32 @@ kendi yol haritası, ürün kriterleri ve hesaplama araçları vardır.
 2026 kuralları içerikte yer alır: ABD'de 800 $ gümrük muafiyetinin kalkması, AB'de ürün başına
 3 € gümrük, Türkiye'de Stripe/PayPal olmaması ve Shopify Payments'ın yabancılara kısıtlamaları.
 
-## Kendi Telegram botuna bağlama
+## Kendi Telegram botuna bağlama (kolay yol)
 
-1. Telegram'da [@BotFather](https://t.me/BotFather)'a `/newbot` yaz ve token'ı al
-   (zaten botun varsa `/mybots` → botun → *API Token*).
-2. `eticaret-bot` klasöründe `.env.example` dosyasını kopyalayıp adını `.env` yap ve token'ı yaz:
+1. **Python kur:** [python.org/downloads](https://www.python.org/downloads/) → indir → kurulumun ilk
+   ekranında **"Add python.exe to PATH"** kutusunu işaretle → *Install Now*.
+2. **Kodu indir:** GitHub'da bu dalın sayfasında yeşil **Code** → **Download ZIP**, sonra ZIP'i
+   sağ tık → *Tümünü ayıkla*.
+3. **Token'ı al:** Telegram'da [@BotFather](https://t.me/BotFather) → `/mybots` → botun → *API Token* → kopyala.
+4. **Başlat:** `eticaret-bot` klasöründe
+   - Windows: **`baslat.bat`** dosyasına çift tıkla
+   - macOS: **`baslat.command`** dosyasına çift tıkla (ilk seferde sağ tık → *Aç*)
+5. İlk açılışta kurulum birkaç dakika sürer, sonra token'ı sorar: yapıştır, Enter'a bas.
+6. "Bot çalışıyor" yazısını görünce Telegram'da botuna `/start` yaz.
 
-   ```
-   TELEGRAM_BOT_TOKEN=123456789:ABC...
-   ```
+Pencere açık kaldığı sürece bot çalışır. Token'ı değiştirmek için `.env` dosyasını silip tekrar başlat.
+⚠️ Token bir şifredir: kimseyle paylaşma; `.env` dosyası git'e gönderilmez.
 
-   ⚠️ Token bir şifredir: kimseyle paylaşma, `.env` dosyası git'e gönderilmez.
+### Elle kurulum (geliştiriciler için)
 
-3. Çalıştır:
-
-   ```bash
-   cd eticaret-bot
-   python -m venv .venv
-   source .venv/bin/activate        # Windows: .venv\Scripts\activate
-   pip install -r requirements.txt
-   python -m eticaret_bot
-   ```
-
-4. Telegram'da botuna `/start` yaz. Bot, bu komut çalıştığı sürece cevap verir.
+```bash
+cd eticaret-bot
+cp .env.example .env              # içine TELEGRAM_BOT_TOKEN=... yaz
+python -m venv .venv
+source .venv/bin/activate         # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python -m eticaret_bot
+```
 
 ### 7/24 çalıştırma (sunucu)
 
