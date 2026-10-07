@@ -7,6 +7,8 @@ Varsayımlar:
 - Gelir/kurumlar vergisi ve ABD satış vergisi dahil değildir.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 

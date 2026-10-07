@@ -1,5 +1,7 @@
 """Dal (dropshipping modeli) ve dala bağlı form araçlarının tanımları."""
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from dataclasses import dataclass, field
 

@@ -1,5 +1,7 @@
 """Türkçe sayı okuma/yazma yardımcıları."""
 
+from __future__ import annotations
+
 import re
 
 

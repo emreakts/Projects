@@ -1,5 +1,7 @@
 """🅱️ Türkiye'den yurt dışına dropshipping (e-ihracat). İçerik bu dalın çalışma turunda eklenecek."""
 
+from __future__ import annotations
+
 from ..core.branch import Branch
 
 SUMMARY = (

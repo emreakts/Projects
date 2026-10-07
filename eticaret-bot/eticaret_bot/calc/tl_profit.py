@@ -8,6 +8,8 @@ Varsayımlar (basitleştirilmiş model):
 - Gelir/kurumlar vergisi dahil değildir.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 

@@ -4,6 +4,8 @@
 XML dropshipping'e özel içerik bu dalın kendi çalışma turunda eklenecek.
 """
 
+from __future__ import annotations
+
 from ..calc import tl_profit
 from ..core.branch import Branch, Field, FormTool
 from ..core.roadmap import make_stage

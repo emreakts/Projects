@@ -4,6 +4,8 @@ Eşikler dropshipping topluluğunda yaygın kullanılan pratik kurallardır, kes
 Karar, harcamanın başa baş CPA'ya (sipariş başı reklamsız kâr) oranına göre verilir.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 
 LOW_CTR_PCT = 1.0  # link tıklama oranı bunun altındaysa kreatif zayıf

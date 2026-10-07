@@ -1,5 +1,7 @@
 """Yol haritası motoru: aşamalar, görevler ve ilerleme hesapları (dallardan bağımsız)."""
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 from dataclasses import dataclass
 

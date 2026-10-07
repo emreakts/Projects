@@ -14,6 +14,8 @@ Callback verisi şeması:
   fm:<dal>:<araç>         form aracını başlat (kâr hesabı, reklam testi...)
 """
 
+from __future__ import annotations
+
 import html
 import logging
 import os

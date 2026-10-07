@@ -4,6 +4,8 @@ Kullanıcı her kriter için bir seçenek seçer, her seçeneğin 1-5 arası pua
 Kriter ağırlıklarına göre 0-100 arası skor ve karar üretilir.
 """
 
+from __future__ import annotations
+
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 

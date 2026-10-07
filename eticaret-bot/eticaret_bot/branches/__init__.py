@@ -1,5 +1,7 @@
 """Dropshipping dalları. Her dal kendi yol haritası, ürün kriterleri ve araçlarıyla gelir."""
 
+from __future__ import annotations
+
 from ..core.branch import Branch
 from ..core.roadmap import task_ids
 from . import eihracat, global_ds, yurtici

@@ -3,6 +3,8 @@
 Türkiye'den yönetilen, ABD / UK / AB / CA / AU müşterilerine satış yapan model.
 """
 
+from __future__ import annotations
+
 from ..calc import ad_test, global_profit
 from ..core.branch import Branch, Field, FormTool
 from ..core.scoring import Criterion

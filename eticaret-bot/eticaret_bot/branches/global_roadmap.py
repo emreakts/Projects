@@ -3,6 +3,8 @@
 Yasal ve vergisel adımlar genel bilgilendirmedir; kesin karar için mali müşavir / avukat görüşü alınmalı.
 """
 
+from __future__ import annotations
+
 from ..core.roadmap import make_stage
 
 BRANCH_ID = "c"
