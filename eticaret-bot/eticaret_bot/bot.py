@@ -2,6 +2,9 @@
 
 Callback verisi şeması:
   menu, help, cancel
+  edu                     akademi ders listesi
+  ls:<n> / lsd:<n>        n. ders / n. dersi bitir ve sonrakine geç
+  qz, qa:<cevaplar>       model testi; cevaplar seçilen seçenek indeksleri (ör. qa:021)
   br:<dal>                dal ana sayfası
   rm:<dal>                dal yol haritası
   st:<aşama id>           aşama görünümü (ör. st:c.sirket)
@@ -36,6 +39,7 @@ from telegram.ext import (
 )
 from telegram.warnings import PTBUserWarning
 
+from . import academy
 from .branches import ALL_TASK_IDS, BRANCHES, branch_of_task
 from .core import roadmap, scoring
 from .core.branch import Branch, Field
@@ -79,8 +83,10 @@ def _nav(branch: Branch | None = None) -> list[Btn]:
 
 WELCOME = (
     "👋 <b>Dropshipping Asistanına hoş geldin!</b>\n\n"
-    "Stoksuz e-ticaretin her modelinde, şirket kurulumundan ürün seçimine, reklamdan ölçeklemeye "
-    "kadar seni adım adım yönlendiririm. Bir dal seç:\n\n"
+    "E-ticarete sıfırdan başlamandan ilk satışına ve büyümene kadar seni adım adım yönlendiririm.\n\n"
+    "🎓 <b>Yeniysen buradan başla:</b> Başlangıç Akademisi, e-ticaretin temellerini 9 kısa derste anlatır.\n"
+    "🧭 <b>Bana uygun model:</b> 6 soruda hangi dropshipping modelinin sana uyduğunu bulur.\n\n"
+    "<b>Dropshipping dalları</b>\n"
     "🅰️ <b>Yurt İçi:</b> Türk tedarikçi (XML bayilik) → Trendyol, Hepsiburada, kendi site\n"
     "🅱️ <b>E-İhracat:</b> Türk ürünleri → Etsy, Amazon, Shopify ile yurt dışına\n"
     "🅲 <b>Global:</b> Shopify + CJ/AliExpress tedarikçileri → ABD, UK, AB müşterileri"
@@ -89,6 +95,8 @@ WELCOME = (
 HELP = (
     "<b>Komutlar</b>\n"
     "/start veya /menu: Ana menü\n"
+    "/akademi: E-Ticarete Başlangıç Akademisi\n"
+    "/test: Bana uygun model testi\n"
     "/a, /b, /c: İlgili dropshipping dalına git\n"
     "/iptal: Devam eden analizi/hesabı iptal et\n"
     "/sifirla: Tüm yol haritası ilerlemeni sıfırla\n\n"
@@ -98,7 +106,11 @@ HELP = (
 
 
 def main_menu() -> InlineKeyboardMarkup:
-    rows = [[Btn(b.title + ("" if b.ready else " 🚧"), callback_data=f"br:{b.id}")] for b in BRANCHES.values()]
+    rows = [
+        [Btn("🎓 E-Ticarete Başlangıç Akademisi", callback_data="edu")],
+        [Btn("🧭 Bana uygun model hangisi?", callback_data="qz")],
+    ]
+    rows += [[Btn(b.title + ("" if b.ready else " 🚧"), callback_data=f"br:{b.id}")] for b in BRANCHES.values()]
     rows.append([Btn("ℹ️ Yardım", callback_data="help")])
     return InlineKeyboardMarkup(rows)
 
@@ -118,6 +130,133 @@ async def reset_progress(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def stale_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.callback_query.answer("Bu işlem sona ermiş, menüden yeniden başlat.", show_alert=True)
+
+
+# ---------- 🎓 Akademi ve model testi ----------
+
+def _lesson_id(n: int) -> str:
+    return f"edu.{n}"
+
+
+async def show_academy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    done = _storage(context).done_tasks(update.effective_user.id)
+    finished = sum(_lesson_id(n) in done for n in range(1, len(academy.LESSONS) + 1))
+    rows = [
+        [Btn(("✅ " if _lesson_id(n) in done else "⬜ ") + f"{n}. {lesson.title}", callback_data=f"ls:{n}")]
+        for n, lesson in enumerate(academy.LESSONS, 1)
+    ]
+    rows.append([Btn("🧭 Bana uygun model hangisi?", callback_data="qz")])
+    rows.append(_nav())
+    text = (
+        "🎓 <b>E-Ticarete Başlangıç Akademisi</b>\n\n"
+        "Sıfırdan başlayan biri için e-ticaretin temelleri, kısa derslerle. Sırayla gitmeni öneririm.\n\n"
+        f"İlerleme: {roadmap.progress_bar(finished, len(academy.LESSONS))}"
+    )
+    await _reply(update, text, InlineKeyboardMarkup(rows))
+
+
+def lesson_view(n: int) -> tuple[str, InlineKeyboardMarkup]:
+    lesson = academy.LESSONS[n - 1]
+    total = len(academy.LESSONS)
+    text = (
+        f"🎓 <b>Ders {n}/{total}: {lesson.title}</b>\n\n"
+        f"{lesson.body}\n\n"
+        f"💡 <b>Özet:</b> {lesson.takeaway}"
+    )
+    if n < total:
+        rows = [[Btn("✅ Anladım, sonraki ders", callback_data=f"lsd:{n}")]]
+    else:
+        rows = [[Btn("✅ Bitirdim, testi çöz", callback_data=f"lsd:{n}")]]
+    nav = []
+    if n > 1:
+        nav.append(Btn("⬅️ Önceki", callback_data=f"ls:{n - 1}"))
+    if n < total:
+        nav.append(Btn("Sonraki ➡️", callback_data=f"ls:{n + 1}"))
+    if nav:
+        rows.append(nav)
+    rows.append([Btn("📚 Dersler", callback_data="edu"), Btn("🏠 Ana Menü", callback_data="menu")])
+    return text, InlineKeyboardMarkup(rows)
+
+
+def _lesson_number(update: Update) -> int | None:
+    n = int(_arg(update))
+    return n if 1 <= n <= len(academy.LESSONS) else None
+
+
+async def show_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    n = _lesson_number(update)
+    if n is None:
+        await update.callback_query.answer("Bu ders artık yok.")
+        return
+    text, markup = lesson_view(n)
+    await _reply(update, text, markup)
+
+
+async def finish_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    n = _lesson_number(update)
+    if n is None:
+        await update.callback_query.answer("Bu ders artık yok.")
+        return
+    storage = _storage(context)
+    storage.mark_done(update.effective_user.id, _lesson_id(n))
+    if n == len(academy.LESSONS):
+        await _render_quiz(update, "")
+        return
+    text, markup = lesson_view(n + 1)
+    await _reply(update, text, markup)
+
+
+def quiz_view(answers: str) -> tuple[str, InlineKeyboardMarkup]:
+    """answers: şimdiye kadar seçilen seçenek indeksleri. Hepsi cevaplandıysa sonuç ekranı."""
+    if len(answers) < len(academy.QUIZ):
+        i = len(answers)
+        q = academy.QUIZ[i]
+        intro = "🧭 <b>Bana uygun model hangisi?</b>\n\n" if i == 0 else ""
+        text = f"{intro}<b>Soru {i + 1}/{len(academy.QUIZ)}</b>\n\n{q.question}"
+        rows = [[Btn(label, callback_data=f"qa:{answers}{k}")] for k, (label, _) in enumerate(q.options)]
+        rows.append(_nav())
+        return text, InlineKeyboardMarkup(rows)
+
+    order = academy.recommend(answers)
+    scores = academy.quiz_scores(answers)
+    best = BRANCHES[order[0]]
+    lines = [
+        "🧭 <b>Sonuç</b>\n",
+        f"Sana en uygun model: <b>{best.title}</b>\n",
+        academy.QUIZ_REASONS[best.id],
+        "",
+        "Puanlar: " + ", ".join(f"{BRANCHES[b].title} {scores[b]}" for b in order),
+    ]
+    if not best.ready:
+        lines.append("\n🚧 Bu dal henüz hazırlanıyor. O zamana kadar akademiye ve ikinci sıradaki dala göz atabilirsin.")
+    lines.append("\nKarar senin; test sadece yön gösterir.")
+    rows = [
+        [Btn(("➡️ " if b == best.id else "") + BRANCHES[b].title + ("" if BRANCHES[b].ready else " 🚧"), callback_data=f"br:{b}")]
+        for b in order
+    ]
+    rows.append([Btn("🔁 Testi tekrar çöz", callback_data="qz")])
+    rows.append(_nav())
+    return "\n".join(lines), InlineKeyboardMarkup(rows)
+
+
+async def _render_quiz(update: Update, answers: str) -> None:
+    text, markup = quiz_view(answers)
+    await _reply(update, text, markup)
+
+
+async def start_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _render_quiz(update, "")
+
+
+async def answer_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    answers = _arg(update)
+    valid = len(answers) <= len(academy.QUIZ) and all(
+        int(ch) < len(academy.QUIZ[i].options) for i, ch in enumerate(answers)
+    )
+    if not valid:
+        await update.callback_query.answer("Bu test eski, yeniden başlat.", show_alert=True)
+        return
+    await _render_quiz(update, answers)
 
 
 # ---------- Dal ana sayfası ----------
@@ -472,10 +611,17 @@ def build_application(token: str, db_path: str) -> Application:
     app.add_handler(CommandHandler(["start", "menu"], start))
     app.add_handler(CommandHandler("yardim", show_help))
     app.add_handler(CommandHandler("sifirla", reset_progress))
+    app.add_handler(CommandHandler("akademi", show_academy))
+    app.add_handler(CommandHandler("test", start_quiz))
     for branch_id in BRANCHES:
         app.add_handler(CommandHandler(branch_id, _branch_command(branch_id)))
     app.add_handler(CallbackQueryHandler(start, pattern="^menu$"))
     app.add_handler(CallbackQueryHandler(show_help, pattern="^help$"))
+    app.add_handler(CallbackQueryHandler(show_academy, pattern="^edu$"))
+    app.add_handler(CallbackQueryHandler(show_lesson, pattern=r"^ls:\d+$"))
+    app.add_handler(CallbackQueryHandler(finish_lesson, pattern=r"^lsd:\d+$"))
+    app.add_handler(CallbackQueryHandler(start_quiz, pattern="^qz$"))
+    app.add_handler(CallbackQueryHandler(answer_quiz, pattern=r"^qa:\d*$"))
     app.add_handler(CallbackQueryHandler(show_branch, pattern=r"^br:\w+$"))
     app.add_handler(CallbackQueryHandler(show_roadmap, pattern=r"^rm:\w+$"))
     app.add_handler(CallbackQueryHandler(show_stage, pattern=r"^st:[\w.]+$"))

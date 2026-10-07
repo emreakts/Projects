@@ -33,6 +33,12 @@ class Storage:
         self._conn.commit()
         return cur.rowcount == 0
 
+    def mark_done(self, user_id: int, task_id: str) -> None:
+        self._conn.execute(
+            "INSERT OR IGNORE INTO progress (user_id, task_id) VALUES (?, ?)", (user_id, task_id)
+        )
+        self._conn.commit()
+
     def reset(self, user_id: int) -> None:
         self._conn.execute("DELETE FROM progress WHERE user_id = ?", (user_id,))
         self._conn.commit()

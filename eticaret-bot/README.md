@@ -9,6 +9,14 @@ kendi yol haritası, ürün kriterleri ve hesaplama araçları vardır.
 | 🅱️ E-İhracat | Türk ürünleri → Etsy, Amazon, Shopify ile yurt dışına (ETGB) | Hazırlanıyor |
 | 🅲 Global | Shopify + CJ / AliExpress / ABD depolu tedarikçiler → ABD, UK, AB, CA, AU | ✅ Hazır |
 
+## 🎓 Başlangıç Akademisi ve model testi
+
+- **🎓 E-Ticarete Başlangıç Akademisi:** Sıfırdan başlayanlar için 9 kısa ders: iş modelleri, satış
+  kanalları, birim ekonomisi, ürün seçimi, tedarik, yasal temeller, listeleme ve pazarlama, operasyon,
+  ilk 30 gün planı. Bitirilen dersler kaydedilir.
+- **🧭 Bana uygun model hangisi?:** 6 soruluk test; bütçe, İngilizce, risk iştahı, reklam ilgisi,
+  zaman ve hedefe göre A / B / C dallarından birini önerir.
+
 ## 🅲 Global Dropshipping
 
 - **🧭 Adım Adım Rehber:** Seni ilk tamamlanmamış adıma götürür. Her adımda numaralı
@@ -84,7 +92,7 @@ Kullanıcı ilerlemesi `dropshipping-data` volume'unda saklanır, güncellemede 
 
 ## Komutlar
 
-`/start` `/menu` `/a` `/b` `/c` `/iptal` `/sifirla` `/yardim`
+`/start` `/menu` `/akademi` `/test` `/a` `/b` `/c` `/iptal` `/sifirla` `/yardim`
 
 ## Testler
 
@@ -100,6 +108,7 @@ eticaret_bot/
   bot.py              Telegram akışları (menüler, konuşmalar); dallardan bağımsız
   storage.py          SQLite ilerleme kaydı
   formatting.py       Türkçe sayı okuma/yazma
+  academy.py          Başlangıç akademisi dersleri ve model testi
   core/               Ortak motorlar: yol haritası, puanlama, dal ve form tanımları
   calc/               Hesaplar: tl_profit, global_profit, ad_test
   branches/           Dallar: yurtici (A), eihracat (B), global_ds (C)
