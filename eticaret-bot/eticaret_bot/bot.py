@@ -1,4 +1,17 @@
-"""Telegram bot: menüler, yol haritası, ürün analizi ve kâr hesaplayıcı akışları."""
+"""Telegram bot: ana menü, dropshipping dalları ve dallara ait akışlar.
+
+Callback verisi şeması:
+  menu, help, cancel
+  br:<dal>                dal ana sayfası
+  rm:<dal>                dal yol haritası
+  st:<aşama id>           aşama görünümü (ör. st:c.sirket)
+  tg:<görev id>           görevi işaretle / kaldır
+  next:<dal>              sıradaki adım
+  done:<görev id>         görevi tamamla ve sıradakine geç
+  ps:<dal>                ürün analizini başlat
+  pa:<kriter>:<puan>      ürün analizi cevabı
+  fm:<dal>:<araç>         form aracını başlat (kâr hesabı, reklam testi...)
+"""
 
 import html
 import logging
@@ -19,8 +32,10 @@ from telegram.ext import (
 )
 from telegram.warnings import PTBUserWarning
 
-from .formatting import fmt_pct, fmt_tl, parse_number
-from .modules import product_score, profit_calc, roadmap
+from .branches import ALL_TASK_IDS, BRANCHES, branch_of_task
+from .core import roadmap, scoring
+from .core.branch import Branch, Field
+from .formatting import parse_number
 from .storage import Storage
 
 # Konuşmalarda hem buton hem metin cevabı kullanıyoruz; per_message uyarısı bu kullanım için geçerli değil.
@@ -28,71 +43,59 @@ warnings.filterwarnings("ignore", category=PTBUserWarning, message=".*per_messag
 
 log = logging.getLogger(__name__)
 
-PS_NAME, PS_ASK, PC_ASK = range(3)
-
-PROFIT_FIELDS: tuple[tuple[str, str, float | None], ...] = (
-    # (alan, soru, boş geçilirse varsayılan; None = zorunlu)
-    ("sale_price", "🏷 Satış fiyatı (KDV dahil, TL)?", None),
-    ("unit_cost", "📦 Ürünün birim alış maliyeti (KDV dahil, TL)?", None),
-    ("commission_pct", "🏪 Pazaryeri komisyonu (%)? Kendi siten ise ödeme komisyonunu yaz (ör. 3).", None),
-    ("shipping", "🚚 Sipariş başı kargo ücreti (KDV dahil, TL)?", None),
-    ("ad_cost", "📣 Satış başı reklam harcaması (TL)? Bilmiyorsan 0 yaz.", 0.0),
-    ("packaging", "🎁 Paketleme maliyeti (TL)? Yoksa 0 yaz.", 0.0),
-    ("return_rate_pct", "↩️ Tahmini iade oranı (%)? Bilmiyorsan 5 yaz.", 5.0),
-    ("vat_pct", "🧾 KDV oranı (%)? Çoğu ürün için 20.", 20.0),
-)
+PS_NAME, PS_ASK, FORM_ASK = range(3)
 
 
 def _storage(context: ContextTypes.DEFAULT_TYPE) -> Storage:
     return context.application.bot_data["storage"]
 
 
-def main_menu() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        [
-            [Btn("🗺 Yol Haritası", callback_data="rm"), Btn("📍 Sıradaki Adım", callback_data="next")],
-            [Btn("🔍 Ürün Analizi", callback_data="ps"), Btn("💰 Kâr Hesapla", callback_data="pc")],
-            [Btn("ℹ️ Yardım", callback_data="help")],
-        ]
-    )
+def _arg(update: Update, index: int = 1) -> str:
+    return update.callback_query.data.split(":")[index]
 
 
-def back_to_menu() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([[Btn("🏠 Ana Menü", callback_data="menu")]])
-
-
-async def _reply(update: Update, text: str, markup: InlineKeyboardMarkup | None = None, edit: bool = True):
+async def _reply(update: Update, text: str, markup: InlineKeyboardMarkup | None = None) -> None:
     """Butondan geldiyse mesajı düzenler, komuttan/metinden geldiyse yeni mesaj gönderir."""
     query = update.callback_query
     if query:
         await query.answer()
-        if edit:
-            await query.edit_message_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
-            return
-    await update.effective_chat.send_message(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+        await query.edit_message_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+    else:
+        await update.effective_chat.send_message(text, reply_markup=markup, parse_mode=ParseMode.HTML)
+
+
+def _nav(branch: Branch | None = None) -> list[Btn]:
+    row = [Btn("🏠 Ana Menü", callback_data="menu")]
+    if branch:
+        row.insert(0, Btn(f"⬅️ {branch.title}", callback_data=f"br:{branch.id}"))
+    return row
 
 
 # ---------- Genel ----------
 
 WELCOME = (
-    "👋 <b>E-Ticaret Asistanına hoş geldin!</b>\n\n"
-    "Sıfırdan mağaza kurmaktan ürün seçimine, yasal süreçten reklama kadar her adımda seni yönlendiririm.\n\n"
-    "🗺 <b>Yol Haritası:</b> Tüm süreç adım adım, ilerlemeni kaydederim\n"
-    "📍 <b>Sıradaki Adım:</b> Şu an ne yapman gerektiğini söylerim\n"
-    "🔍 <b>Ürün Analizi:</b> Ürün adayını kriterlere göre puanlarım\n"
-    "💰 <b>Kâr Hesapla:</b> Gerçek net kârını, başa baş ROAS'ı ve önerilen fiyatı hesaplarım"
+    "👋 <b>Dropshipping Asistanına hoş geldin!</b>\n\n"
+    "Stoksuz e-ticaretin her modelinde, şirket kurulumundan ürün seçimine, reklamdan ölçeklemeye "
+    "kadar seni adım adım yönlendiririm. Bir dal seç:\n\n"
+    "🅰️ <b>Yurt İçi:</b> Türk tedarikçi (XML bayilik) → Trendyol, Hepsiburada, kendi site\n"
+    "🅱️ <b>E-İhracat:</b> Türk ürünleri → Etsy, Amazon, Shopify ile yurt dışına\n"
+    "🅲 <b>Global:</b> Shopify + CJ/AliExpress tedarikçileri → ABD, UK, AB müşterileri"
 )
 
 HELP = (
     "<b>Komutlar</b>\n"
     "/start veya /menu: Ana menü\n"
-    "/yolharitasi: Yol haritası\n"
-    "/siradaki: Sıradaki adım\n"
-    "/urun: Ürün analizi\n"
-    "/kar: Kâr hesaplayıcı\n"
+    "/a, /b, /c: İlgili dropshipping dalına git\n"
     "/iptal: Devam eden analizi/hesabı iptal et\n"
-    "/sifirla: Yol haritası ilerlemeni sıfırla"
+    "/sifirla: Tüm yol haritası ilerlemeni sıfırla\n\n"
+    "Her dalda: 🗺 Yol Haritası, 📍 Sıradaki Adım, 🔍 Ürün Analizi ve dala özel hesaplama araçları var."
 )
+
+
+def main_menu() -> InlineKeyboardMarkup:
+    rows = [[Btn(b.title + ("" if b.ready else " 🚧"), callback_data=f"br:{b.id}")] for b in BRANCHES.values()]
+    rows.append([Btn("ℹ️ Yardım", callback_data="help")])
+    return InlineKeyboardMarkup(rows)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -100,7 +103,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def show_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await _reply(update, HELP, back_to_menu())
+    await _reply(update, HELP, InlineKeyboardMarkup([_nav()]))
 
 
 async def reset_progress(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -112,26 +115,54 @@ async def stale_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.callback_query.answer("Bu işlem sona ermiş, menüden yeniden başlat.", show_alert=True)
 
 
+# ---------- Dal ana sayfası ----------
+
+def _branch_home(branch: Branch) -> InlineKeyboardMarkup:
+    if not branch.ready:
+        return InlineKeyboardMarkup([_nav()])
+    rows = [
+        [Btn("🗺 Yol Haritası", callback_data=f"rm:{branch.id}"), Btn("📍 Sıradaki Adım", callback_data=f"next:{branch.id}")],
+        [Btn("🔍 Ürün Analizi", callback_data=f"ps:{branch.id}")],
+    ]
+    tool_buttons = [Btn(t.button, callback_data=f"fm:{branch.id}:{t.id}") for t in branch.tools]
+    rows += [tool_buttons[i : i + 2] for i in range(0, len(tool_buttons), 2)]
+    rows.append(_nav())
+    return InlineKeyboardMarkup(rows)
+
+
+async def show_branch(update: Update, context: ContextTypes.DEFAULT_TYPE, branch_id: str | None = None) -> None:
+    branch = BRANCHES[branch_id or _arg(update)]
+    await _reply(update, branch.summary, _branch_home(branch))
+
+
+def _branch_command(branch_id: str):
+    async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await show_branch(update, context, branch_id)
+
+    return handler
+
+
 # ---------- Yol haritası ----------
 
 async def show_roadmap(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    branch = BRANCHES[_arg(update)]
     done = _storage(context).done_tasks(update.effective_user.id)
-    total_done = sum(t in done for t in roadmap.ALL_TASK_IDS)
+    ids = roadmap.task_ids(branch.stages)
     rows = []
-    for s in roadmap.STAGES:
+    for s in branch.stages:
         d, n = roadmap.stage_progress(s, done)
         mark = "✅" if d == n else f"{d}/{n}"
         rows.append([Btn(f"{s.title}  ({mark})", callback_data=f"st:{s.id}")])
-    rows.append([Btn("🏠 Ana Menü", callback_data="menu")])
+    rows.append(_nav(branch))
     text = (
-        "🗺 <b>E-Ticaret Yol Haritası</b>\n\n"
-        f"Genel ilerleme: {roadmap.progress_bar(total_done, len(roadmap.ALL_TASK_IDS))}\n\n"
+        f"🗺 <b>{branch.title}: Yol Haritası</b>\n\n"
+        f"İlerleme: {roadmap.progress_bar(sum(t in done for t in ids), len(ids))}\n\n"
         "Bir aşama seç:"
     )
     await _reply(update, text, InlineKeyboardMarkup(rows))
 
 
-def _stage_view(stage: roadmap.Stage, done: set[str]) -> tuple[str, InlineKeyboardMarkup]:
+def _stage_view(branch: Branch, stage: roadmap.Stage, done: set[str]) -> tuple[str, InlineKeyboardMarkup]:
     d, n = roadmap.stage_progress(stage, done)
     text = (
         f"<b>{stage.title}</b>\n{roadmap.progress_bar(d, n)}\n\n"
@@ -142,97 +173,111 @@ def _stage_view(stage: roadmap.Stage, done: set[str]) -> tuple[str, InlineKeyboa
         [Btn(("✅ " if t.id in done else "⬜ ") + t.text, callback_data=f"tg:{t.id}")]
         for t in stage.tasks
     ]
-    rows.append([Btn("⬅️ Yol Haritası", callback_data="rm"), Btn("🏠 Ana Menü", callback_data="menu")])
+    rows.append([Btn("⬅️ Yol Haritası", callback_data=f"rm:{branch.id}"), Btn("🏠 Ana Menü", callback_data="menu")])
     return text, InlineKeyboardMarkup(rows)
 
 
-async def show_stage(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    stage = roadmap.get_stage(update.callback_query.data.split(":", 1)[1])
-    text, markup = _stage_view(stage, _storage(context).done_tasks(update.effective_user.id))
+async def _render_stage(update: Update, context: ContextTypes.DEFAULT_TYPE, stage_id: str) -> None:
+    branch = BRANCHES[stage_id.split(".", 1)[0]]
+    stage = roadmap.find_stage(branch.stages, stage_id)
+    text, markup = _stage_view(branch, stage, _storage(context).done_tasks(update.effective_user.id))
     await _reply(update, text, markup)
+
+
+async def show_stage(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _render_stage(update, context, _arg(update))
 
 
 async def toggle_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    task_id = update.callback_query.data.split(":", 1)[1]
-    if task_id not in roadmap.ALL_TASK_IDS:
+    task_id = _arg(update)
+    if task_id not in ALL_TASK_IDS:
         await update.callback_query.answer("Bu adım artık yok.")
         return
-    storage = _storage(context)
-    storage.toggle_task(update.effective_user.id, task_id)
-    stage = roadmap.get_stage(task_id.split(".", 1)[0])
-    text, markup = _stage_view(stage, storage.done_tasks(update.effective_user.id))
-    await _reply(update, text, markup)
+    _storage(context).toggle_task(update.effective_user.id, task_id)
+    await _render_stage(update, context, task_id.rsplit(".", 1)[0])
 
 
-async def show_next(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    nxt = roadmap.next_task(_storage(context).done_tasks(update.effective_user.id))
+async def _render_next(update: Update, context: ContextTypes.DEFAULT_TYPE, branch: Branch) -> None:
+    nxt = roadmap.next_task(branch.stages, _storage(context).done_tasks(update.effective_user.id))
     if nxt is None:
-        text = "🎉 Tüm yol haritasını tamamladın! Şimdi Analiz ve Büyüme döngüsünü haftalık tekrarla."
-        await _reply(update, text, back_to_menu())
+        text = f"🎉 {branch.title} yol haritasını tamamladın! Ölçekleme adımlarını haftalık tekrarla."
+        await _reply(update, text, InlineKeyboardMarkup([_nav(branch)]))
         return
     stage, task = nxt
     text = f"📍 <b>Sıradaki adımın</b>\n\n<b>{stage.title}</b>\n👉 {task.text}\n\n💡 {stage.guide}"
     markup = InlineKeyboardMarkup(
         [
             [Btn("✅ Bunu tamamladım", callback_data=f"done:{task.id}")],
-            [Btn("📂 Aşamaya git", callback_data=f"st:{stage.id}"), Btn("🏠 Ana Menü", callback_data="menu")],
+            [Btn("📂 Aşamaya git", callback_data=f"st:{stage.id}")],
+            _nav(branch),
         ]
     )
     await _reply(update, text, markup)
 
 
+async def show_next(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await _render_next(update, context, BRANCHES[_arg(update)])
+
+
 async def complete_and_next(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    task_id = update.callback_query.data.split(":", 1)[1]
+    task_id = _arg(update)
+    if task_id not in ALL_TASK_IDS:
+        await update.callback_query.answer("Bu adım artık yok.")
+        return
     storage = _storage(context)
-    if task_id in roadmap.ALL_TASK_IDS and task_id not in storage.done_tasks(update.effective_user.id):
+    if task_id not in storage.done_tasks(update.effective_user.id):
         storage.toggle_task(update.effective_user.id, task_id)
-    await show_next(update, context)
+    await _render_next(update, context, branch_of_task(task_id))
 
 
 # ---------- Ürün analizi ----------
 
-def _criterion_prompt(index: int) -> tuple[str, InlineKeyboardMarkup]:
-    c = product_score.CRITERIA[index]
-    text = f"<b>Soru {index + 1}/{len(product_score.CRITERIA)}</b>\n\n{c.question}"
-    rows = [[Btn(label, callback_data=f"ps:{c.key}:{score}")] for label, score in c.options]
+def _criterion_prompt(branch: Branch, index: int) -> tuple[str, InlineKeyboardMarkup]:
+    c = branch.criteria[index]
+    text = f"<b>Soru {index + 1}/{len(branch.criteria)}</b>\n\n{c.question}"
+    rows = [[Btn(label, callback_data=f"pa:{c.key}:{score}")] for label, score in c.options]
     rows.append([Btn("✖️ İptal", callback_data="cancel")])
     return text, InlineKeyboardMarkup(rows)
 
 
 async def ps_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["ps"] = {"answers": {}, "index": 0}
+    branch = BRANCHES[_arg(update)]
+    context.user_data["ps"] = {"branch": branch.id, "answers": {}, "index": 0}
     await _reply(
         update,
-        "🔍 <b>Ürün Analizi</b>\n\nAnaliz etmek istediğin ürünün adını yaz:\n(ör. <i>Bambu kesme tahtası seti</i>)",
+        f"🔍 <b>Ürün Analizi</b> ({branch.title})\n\nAnaliz etmek istediğin ürünün adını yaz:",
     )
     return PS_NAME
 
 
 async def ps_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["ps"]["name"] = update.message.text.strip()[:100]
-    text, markup = _criterion_prompt(0)
+    state = context.user_data["ps"]
+    state["name"] = update.message.text.strip()[:100]
+    text, markup = _criterion_prompt(BRANCHES[state["branch"]], 0)
     await update.message.reply_text(text, reply_markup=markup, parse_mode=ParseMode.HTML)
     return PS_ASK
 
 
 async def ps_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     state = context.user_data.get("ps")
-    _, key, score = update.callback_query.data.split(":")
     if state is None:
         await stale_button(update, context)
         return ConversationHandler.END
-    if key != product_score.CRITERIA[state["index"]].key:
+    branch = BRANCHES[state["branch"]]
+    key, score = _arg(update, 1), int(_arg(update, 2))
+    criterion = branch.criteria[state["index"]]
+    if key != criterion.key or score not in {s for _, s in criterion.options}:
         await update.callback_query.answer("Lütfen son mesajdaki soruyu cevapla.")
         return PS_ASK
 
-    state["answers"][key] = int(score)
+    state["answers"][key] = score
     state["index"] += 1
-    if state["index"] < len(product_score.CRITERIA):
-        text, markup = _criterion_prompt(state["index"])
+    if state["index"] < len(branch.criteria):
+        text, markup = _criterion_prompt(branch, state["index"])
         await _reply(update, text, markup)
         return PS_ASK
 
-    result = product_score.evaluate(state["answers"])
+    result = scoring.evaluate(branch.criteria, state["answers"])
     lines = [
         f"🔍 <b>{html.escape(state['name'])}</b> analiz sonucu\n",
         f"Skor: <b>{result.score}/100</b>",
@@ -244,122 +289,97 @@ async def ps_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if result.weaknesses:
         lines.append("\n🔧 <b>Geliştirilecek noktalar</b>")
         lines += [f"• {t}" for t in result.weaknesses]
-    lines.append("\n👉 Sonraki adım: 💰 Kâr Hesapla ile gerçek kârını kontrol et.")
-    markup = InlineKeyboardMarkup(
-        [
-            [Btn("🔍 Başka ürün", callback_data="ps"), Btn("💰 Kâr Hesapla", callback_data="pc")],
-            [Btn("🏠 Ana Menü", callback_data="menu")],
-        ]
-    )
+    rows = [[Btn("🔍 Başka ürün", callback_data=f"ps:{branch.id}")]]
+    if branch.tools:
+        first = branch.tools[0]
+        lines.append(f"\n👉 Sonraki adım: {first.button} ile gerçek kârını kontrol et.")
+        rows[0].append(Btn(first.button, callback_data=f"fm:{branch.id}:{first.id}"))
+    rows.append(_nav(branch))
     context.user_data.pop("ps", None)
-    await _reply(update, "\n".join(lines), markup)
+    await _reply(update, "\n".join(lines), InlineKeyboardMarkup(rows))
     return ConversationHandler.END
 
 
-# ---------- Kâr hesaplayıcı ----------
+# ---------- Form araçları (kâr hesabı, reklam testi...) ----------
 
-def _profit_prompt(index: int) -> str:
-    _, question, default = PROFIT_FIELDS[index]
-    hint = "" if default is None else "\n<i>(Boş geçmek için - yaz)</i>"
-    return f"💰 <b>Kâr Hesapla</b> ({index + 1}/{len(PROFIT_FIELDS)})\n\n{question}{hint}"
-
-
-async def pc_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data["pc"] = {"values": {}, "index": 0}
-    await _reply(update, _profit_prompt(0) + "\n\nİstediğin zaman /iptal yazabilirsin.")
-    return PC_ASK
+def _field_prompt(title: str, fields: tuple[Field, ...], index: int) -> str:
+    f = fields[index]
+    hint = "" if f.default is None else "\n<i>(Boş geçmek için - yaz)</i>"
+    return f"<b>{title}</b> ({index + 1}/{len(fields)})\n\n{f.question}{hint}"
 
 
-async def pc_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    state = context.user_data["pc"]
-    name, _, default = PROFIT_FIELDS[state["index"]]
-    raw = update.message.text.strip()
+def _validate(f: Field, raw: str) -> float:
+    """Kullanıcı girdisini alanın kurallarına göre sayıya çevirir; geçersizse ValueError mesajıyla."""
+    if raw == "-" and f.default is not None:
+        return f.default
     try:
-        if raw == "-" and default is not None:
-            value = default
-        else:
-            value = parse_number(raw)
+        value = parse_number(raw)
     except ValueError:
-        await update.message.reply_text("⚠️ Geçerli bir sayı yaz (ör. 249,90).")
-        return PC_ASK
-    if name == "sale_price" and value <= 0:
-        await update.message.reply_text("⚠️ Satış fiyatı 0'dan büyük olmalı.")
-        return PC_ASK
-    if name in ("commission_pct", "return_rate_pct") and value >= 100:
-        await update.message.reply_text("⚠️ Yüzde değeri 100'den küçük olmalı.")
-        return PC_ASK
+        raise ValueError("⚠️ Geçerli bir sayı yaz (ör. 24,90).") from None
+    if f.kind == "positive" and value <= 0:
+        raise ValueError("⚠️ Bu değer 0'dan büyük olmalı.")
+    if f.kind == "pct" and value >= 100:
+        raise ValueError("⚠️ Yüzde değeri 100'den küçük olmalı.")
+    return value
 
-    state["values"][name] = value
+
+async def form_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    branch = BRANCHES[_arg(update, 1)]
+    tool = branch.tool(_arg(update, 2))
+    context.user_data["form"] = {"branch": branch.id, "tool": tool.id, "values": {}, "index": 0}
+    await _reply(update, _field_prompt(tool.title, tool.fields, 0) + "\n\nİstediğin zaman /iptal yazabilirsin.")
+    return FORM_ASK
+
+
+async def form_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    state = context.user_data["form"]
+    branch = BRANCHES[state["branch"]]
+    tool = branch.tool(state["tool"])
+    f = tool.fields[state["index"]]
+    try:
+        value = _validate(f, update.message.text.strip())
+    except ValueError as e:
+        await update.message.reply_text(str(e))
+        return FORM_ASK
+
+    state["values"][f.name] = value
     state["index"] += 1
-    if state["index"] < len(PROFIT_FIELDS):
-        await update.message.reply_text(_profit_prompt(state["index"]), parse_mode=ParseMode.HTML)
-        return PC_ASK
+    if state["index"] < len(tool.fields):
+        await update.message.reply_text(
+            _field_prompt(tool.title, tool.fields, state["index"]), parse_mode=ParseMode.HTML
+        )
+        return FORM_ASK
 
-    inp = profit_calc.ProfitInput(**state["values"])
-    context.user_data.pop("pc", None)
-    await update.message.reply_text(
-        _profit_report(inp), reply_markup=_profit_markup(), parse_mode=ParseMode.HTML
+    context.user_data.pop("form", None)
+    markup = InlineKeyboardMarkup(
+        [[Btn("🔁 Yeniden hesapla", callback_data=f"fm:{branch.id}:{tool.id}")], _nav(branch)]
     )
+    await update.message.reply_text(tool.report(state["values"]), reply_markup=markup, parse_mode=ParseMode.HTML)
     return ConversationHandler.END
-
-
-def _profit_report(inp: profit_calc.ProfitInput) -> str:
-    r = profit_calc.calculate(inp)
-    status = "✅ Kârlı" if r.net_profit > 0 else "❌ Zarar ediyorsun"
-    lines = [
-        "💰 <b>Birim Kâr Analizi</b>\n",
-        f"Satış fiyatı: {fmt_tl(inp.sale_price)}",
-        f"KDV hariç ciro: {fmt_tl(r.net_revenue)}",
-        f"Toplam maliyet (KDV hariç): {fmt_tl(r.total_cost)}",
-        f"Ödenecek tahmini KDV: {fmt_tl(r.vat_payable)}",
-        "",
-        f"<b>Net kâr: {fmt_tl(r.net_profit)}</b> ({status})",
-        f"Net marj: {fmt_pct(r.margin_pct)}",
-        f"Ürün maliyetine göre getiri (ROI): {fmt_pct(r.roi_pct)}",
-    ]
-    if r.breakeven_roas is not None:
-        lines.append(
-            f"Başa baş ROAS: <b>{r.breakeven_roas:.2f}</b>".replace(".", ",")
-            + "\n<i>(Reklama harcadığın her 1 TL bundan az ciro getiriyorsa zarar edersin)</i>"
-        )
-    else:
-        lines.append("Başa baş ROAS: reklamsız bile zarar var, önce maliyet/fiyatı düzelt.")
-
-    lines.append("\n🎯 <b>Hedef marja göre önerilen satış fiyatı</b>")
-    for target in (15, 25, 35):
-        price = profit_calc.suggest_price(inp, target)
-        lines.append(f"• %{target} marj: " + (fmt_tl(price) if price else "komisyon çok yüksek, ulaşılamaz"))
-
-    if r.margin_pct < 15:
-        lines.append(
-            "\n⚠️ Marj %15'in altında. İade, kampanya ve beklenmedik masraflar kârını silebilir."
-        )
-    lines.append("\n<i>Not: Gelir/kurumlar vergisi dahil değildir. Basitleştirilmiş hesaptır.</i>")
-    return "\n".join(lines)
-
-
-def _profit_markup() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        [
-            [Btn("🔁 Yeni hesap", callback_data="pc"), Btn("🔍 Ürün Analizi", callback_data="ps")],
-            [Btn("🏠 Ana Menü", callback_data="menu")],
-        ]
-    )
 
 
 # ---------- Konuşma ortak ----------
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+def _clear(context: ContextTypes.DEFAULT_TYPE) -> None:
     context.user_data.pop("ps", None)
-    context.user_data.pop("pc", None)
+    context.user_data.pop("form", None)
+
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    _clear(context)
     await _reply(update, "✖️ İptal edildi.", main_menu())
     return ConversationHandler.END
 
 
 async def to_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    context.user_data.pop("ps", None)
-    context.user_data.pop("pc", None)
+    _clear(context)
     await start(update, context)
+    return ConversationHandler.END
+
+
+async def to_branch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    _clear(context)
+    await show_branch(update, context)
     return ConversationHandler.END
 
 
@@ -371,14 +391,15 @@ def build_application(token: str, db_path: str) -> Application:
         CommandHandler("iptal", cancel),
         CallbackQueryHandler(cancel, pattern="^cancel$"),
         CallbackQueryHandler(to_menu, pattern="^menu$"),
+        CallbackQueryHandler(to_branch, pattern=r"^br:\w+$"),
         CommandHandler(["start", "menu"], to_menu),
     ]
     app.add_handler(
         ConversationHandler(
-            entry_points=[CommandHandler("urun", ps_start), CallbackQueryHandler(ps_start, pattern="^ps$")],
+            entry_points=[CallbackQueryHandler(ps_start, pattern=r"^ps:\w+$")],
             states={
                 PS_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, ps_name)],
-                PS_ASK: [CallbackQueryHandler(ps_answer, pattern=r"^ps:\w+:\d$")],
+                PS_ASK: [CallbackQueryHandler(ps_answer, pattern=r"^pa:\w+:\d$")],
             },
             fallbacks=fallbacks,
             allow_reentry=True,
@@ -386,8 +407,8 @@ def build_application(token: str, db_path: str) -> Application:
     )
     app.add_handler(
         ConversationHandler(
-            entry_points=[CommandHandler("kar", pc_start), CallbackQueryHandler(pc_start, pattern="^pc$")],
-            states={PC_ASK: [MessageHandler(filters.TEXT & ~filters.COMMAND, pc_answer)]},
+            entry_points=[CallbackQueryHandler(form_start, pattern=r"^fm:\w+:\w+$")],
+            states={FORM_ASK: [MessageHandler(filters.TEXT & ~filters.COMMAND, form_answer)]},
             fallbacks=fallbacks,
             allow_reentry=True,
         )
@@ -395,15 +416,16 @@ def build_application(token: str, db_path: str) -> Application:
 
     app.add_handler(CommandHandler(["start", "menu"], start))
     app.add_handler(CommandHandler("yardim", show_help))
-    app.add_handler(CommandHandler("yolharitasi", show_roadmap))
-    app.add_handler(CommandHandler("siradaki", show_next))
     app.add_handler(CommandHandler("sifirla", reset_progress))
+    for branch_id in BRANCHES:
+        app.add_handler(CommandHandler(branch_id, _branch_command(branch_id)))
     app.add_handler(CallbackQueryHandler(start, pattern="^menu$"))
     app.add_handler(CallbackQueryHandler(show_help, pattern="^help$"))
-    app.add_handler(CallbackQueryHandler(show_roadmap, pattern="^rm$"))
-    app.add_handler(CallbackQueryHandler(show_stage, pattern=r"^st:\w+$"))
+    app.add_handler(CallbackQueryHandler(show_branch, pattern=r"^br:\w+$"))
+    app.add_handler(CallbackQueryHandler(show_roadmap, pattern=r"^rm:\w+$"))
+    app.add_handler(CallbackQueryHandler(show_stage, pattern=r"^st:[\w.]+$"))
     app.add_handler(CallbackQueryHandler(toggle_task, pattern=r"^tg:[\w.]+$"))
-    app.add_handler(CallbackQueryHandler(show_next, pattern="^next$"))
+    app.add_handler(CallbackQueryHandler(show_next, pattern=r"^next:\w+$"))
     app.add_handler(CallbackQueryHandler(complete_and_next, pattern=r"^done:[\w.]+$"))
     app.add_handler(CallbackQueryHandler(stale_button))
     return app

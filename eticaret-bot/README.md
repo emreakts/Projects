@@ -1,16 +1,28 @@
-# E-Ticaret Asistanı (Telegram Botu)
+# Dropshipping Asistanı (Telegram Botu)
 
-E-ticaret sürecini baştan sona yöneten Telegram botu: iş modeli, ürün seçimi, tedarik, yasal süreç,
-mağaza kurulumu, listeleme, pazarlama, operasyon ve büyüme. Hedef pazar şu an Türkiye.
+Dropshipping'in tüm modellerini baştan sona yöneten Telegram botu. Bot 3 dala ayrılır, her dalın
+kendi yol haritası, ürün kriterleri ve hesaplama araçları vardır.
 
-## Özellikler (v0.1)
+| Dal | Model | Durum |
+|---|---|---|
+| 🅰️ Yurt İçi | Türk tedarikçi (XML bayilik) → Trendyol, Hepsiburada, kendi site | Ön sürüm (genel e-ticaret içeriği) |
+| 🅱️ E-İhracat | Türk ürünleri → Etsy, Amazon, Shopify ile yurt dışına (ETGB) | Hazırlanıyor |
+| 🅲 Global | Shopify + CJ / AliExpress / ABD depolu tedarikçiler → ABD, UK, AB, CA, AU | ✅ Hazır |
 
-| Özellik | Ne yapar |
-|---|---|
-| 🗺 Yol Haritası | 9 aşama, 47 adım. İşaretlediğin adımları kaydeder, ilerlemeni gösterir |
-| 📍 Sıradaki Adım | Şu an ne yapman gerektiğini söyler, tek tıkla tamamlandı yaparsın |
-| 🔍 Ürün Analizi | 10 kriter (marj, talep, rekabet, trend, sezon, kargo, iade, fiyat, tedarik, yasal) ile 0-100 skor, karar ve tavsiyeler |
-| 💰 Kâr Hesapla | KDV, komisyon, kargo, reklam, paketleme, iade dahil net kâr, marj, ROI, başa baş ROAS ve hedef marja göre önerilen fiyat |
+## 🅲 Global Dropshipping
+
+- **🗺 Yol Haritası:** 8 aşama, 46 adım. Hedef pazar ve bütçe, yurt dışı şirket ve ödeme
+  (LLC, EIN, Stripe), ürün araştırması, tedarikçi ve DDP kargo, Shopify mağaza, reklam testi,
+  operasyon, ölçekleme
+- **🔍 Ürün Analizi:** 10 kriter: wow etkisi, fiyat çarpanı, fiyat aralığı, talep kanıtı,
+  doygunluk, video kreatif kolaylığı, teslim süresi, boyut, iade ve yasal risk
+- **💵 Kâr Hesabı (USD):** Gümrük, ödeme komisyonu, iade/chargeback dahil. Başa baş CPA,
+  başa baş ROAS, fiyat çarpanı ve hedef marja göre fiyat
+- **📊 Reklam Testi:** Harcama, gösterim, tıklama, sepete ekleme ve satın almaya göre
+  kapat / devam / ölçekle kararı ve huni teşhisi (kreatif, ürün sayfası, ödeme adımı)
+
+2026 kuralları içerikte yer alır: ABD'de 800 $ gümrük muafiyetinin kalkması, AB'de ürün başına
+3 € gümrük, Türkiye'de Stripe/PayPal olmaması ve Shopify Payments'ın yabancılara kısıtlamaları.
 
 ## Kurulum
 
@@ -31,7 +43,7 @@ python -m eticaret_bot
 
 ## Komutlar
 
-`/start` `/menu` `/yolharitasi` `/siradaki` `/urun` `/kar` `/iptal` `/sifirla` `/yardim`
+`/start` `/menu` `/a` `/b` `/c` `/iptal` `/sifirla` `/yardim`
 
 ## Testler
 
@@ -44,20 +56,19 @@ python -m pytest
 
 ```
 eticaret_bot/
-  bot.py              Telegram akışları (menü, konuşmalar)
+  bot.py              Telegram akışları (menüler, konuşmalar); dallardan bağımsız
   storage.py          SQLite ilerleme kaydı
   formatting.py       Türkçe sayı okuma/yazma
-  modules/
-    roadmap.py        Aşamalar ve kontrol listeleri
-    product_score.py  Ürün puanlama kriterleri
-    profit_calc.py    Kâr ve fiyat hesapları
+  core/               Ortak motorlar: yol haritası, puanlama, dal ve form tanımları
+  calc/               Hesaplar: tl_profit, global_profit, ad_test
+  branches/           Dallar: yurtici (A), eihracat (B), global_ds (C)
 ```
 
-İş mantığı `modules/` altında Telegram'dan bağımsızdır, böylece ileride web paneli veya başka kanal eklenebilir.
+Yeni dal veya araç eklemek için `branches/` altında bir `Branch` tanımlamak yeterli; bot menüleri
+ve akışları otomatik oluşur.
 
 ## Planlanan
 
-- Yapay zekâ ile ürün açıklaması, SEO başlık ve reklam metni üretimi
-- Tedarikçi değerlendirme ve maliyet karşılaştırma
-- Stok ve sipariş takibi, pazaryeri API entegrasyonları (Trendyol, Hepsiburada)
-- Haftalık KPI raporu ve hatırlatmalar
+- 🅰️ Yurt içi: XML tedarikçi akışı, fiyat/stok senkronu, pazaryeri kuralları
+- 🅱️ E-ihracat: ETGB, Etsy/Amazon süreçleri, uluslararası kargo hesabı
+- 🅲 Global: tedarikçi karşılaştırma, reklam metni/hook üretimi, haftalık KPI raporu

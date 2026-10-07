@@ -25,3 +25,12 @@ def fmt_tl(value: float) -> str:
 
 def fmt_pct(value: float) -> str:
     return f"%{value:.1f}".replace(".", ",")
+
+
+def fmt_usd(value: float) -> str:
+    s = f"{abs(value):,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+    return f"{'-' if value < 0 else ''}${s}"
+
+
+def fmt_num(value: float, digits: int = 2) -> str:
+    return f"{value:.{digits}f}".replace(".", ",")

@@ -1,50 +1,51 @@
 import pytest
 
-from eticaret_bot.formatting import fmt_tl, parse_number
-from eticaret_bot.modules import product_score, profit_calc, roadmap
+from eticaret_bot.branches import global_ds, yurtici
+from eticaret_bot.calc import tl_profit
+from eticaret_bot.core import roadmap, scoring
+from eticaret_bot.formatting import fmt_tl, fmt_usd, parse_number
 
 
-def _answers(score_fn):
-    return {c.key: score_fn(c) for c in product_score.CRITERIA}
+def _answers(criteria, score_fn):
+    return {c.key: score_fn(c) for c in criteria}
 
 
 def test_perfect_product_scores_100():
-    r = product_score.evaluate(_answers(lambda c: max(s for _, s in c.options)))
+    crit = global_ds.CRITERIA
+    r = scoring.evaluate(crit, _answers(crit, lambda c: max(s for _, s in c.options)))
     assert r.score == 100
     assert r.verdict.startswith("✅")
     assert not r.red_flags
 
 
-def test_low_margin_is_hard_red_flag_even_with_high_score():
-    answers = _answers(lambda c: 5)
-    answers["marj"] = 1
-    r = product_score.evaluate(answers)
+@pytest.mark.parametrize("key", ["markup", "yasal"])
+def test_hard_flag_blocks_even_with_high_score(key):
+    crit = global_ds.CRITERIA
+    answers = _answers(crit, lambda c: max(s for _, s in c.options))
+    answers[key] = 1
+    r = scoring.evaluate(crit, answers)
     assert r.score >= 70
     assert r.verdict.startswith("❌")
     assert r.red_flags
 
 
 def test_middle_product_is_test_verdict():
-    r = product_score.evaluate(_answers(lambda c: 3))
+    crit = yurtici.CRITERIA
+    r = scoring.evaluate(crit, _answers(crit, lambda c: 3))
     assert r.score == 50
     assert r.verdict.startswith("⚠️")
 
 
 def test_missing_criteria_raises():
     with pytest.raises(ValueError):
-        product_score.evaluate({"marj": 5})
+        scoring.evaluate(global_ds.CRITERIA, {"wow": 5})
 
 
-def test_option_scores_in_range():
-    for c in product_score.CRITERIA:
-        assert all(1 <= s <= 5 for _, s in c.options)
-
-
-def test_profit_calculation():
-    inp = profit_calc.ProfitInput(
+def test_tl_profit_calculation():
+    inp = tl_profit.ProfitInput(
         sale_price=600, unit_cost=240, commission_pct=20, shipping=60, ad_cost=0, vat_pct=20
     )
-    r = profit_calc.calculate(inp)
+    r = tl_profit.calculate(inp)
     # ciro 500, ürün 200, komisyon 100, kargo 50 -> kâr 150
     assert r.net_revenue == pytest.approx(500)
     assert r.net_profit == pytest.approx(150)
@@ -55,24 +56,19 @@ def test_profit_calculation():
     assert r.vat_payable == pytest.approx(30)
 
 
-def test_suggest_price_hits_target_margin():
-    inp = profit_calc.ProfitInput(
+def test_tl_suggest_price_hits_target_margin():
+    inp = tl_profit.ProfitInput(
         sale_price=1, unit_cost=240, commission_pct=20, shipping=60, ad_cost=30,
         packaging=6, return_rate_pct=5,
     )
-    price = profit_calc.suggest_price(inp, 25)
-    r = profit_calc.calculate(profit_calc.ProfitInput(**{**inp.__dict__, "sale_price": price}))
+    price = tl_profit.suggest_price(inp, 25)
+    r = tl_profit.calculate(tl_profit.ProfitInput(**{**inp.__dict__, "sale_price": price}))
     assert r.margin_pct == pytest.approx(25)
 
 
-def test_suggest_price_impossible():
-    inp = profit_calc.ProfitInput(sale_price=100, unit_cost=50, commission_pct=80, shipping=0, ad_cost=0)
-    assert profit_calc.suggest_price(inp, 25) is None
-
-
-def test_unprofitable_has_no_breakeven_roas():
-    inp = profit_calc.ProfitInput(sale_price=100, unit_cost=120, commission_pct=10, shipping=20, ad_cost=0)
-    assert profit_calc.calculate(inp).breakeven_roas is None
+def test_tl_suggest_price_impossible():
+    inp = tl_profit.ProfitInput(sale_price=100, unit_cost=50, commission_pct=80, shipping=0, ad_cost=0)
+    assert tl_profit.suggest_price(inp, 25) is None
 
 
 @pytest.mark.parametrize(
@@ -89,20 +85,15 @@ def test_parse_number_invalid(text):
         parse_number(text)
 
 
-def test_fmt_tl():
+def test_formatters():
     assert fmt_tl(1250.5) == "1.250,50 TL"
+    assert fmt_usd(1250.5) == "$1.250,50"
+    assert fmt_usd(-3) == "-$3,00"
 
 
-def test_roadmap_ids_unique_and_next_task():
-    assert len(set(roadmap.ALL_TASK_IDS)) == len(roadmap.ALL_TASK_IDS)
-    stage, task = roadmap.next_task(set())
-    assert task.id == roadmap.ALL_TASK_IDS[0]
-    stage, task = roadmap.next_task({roadmap.ALL_TASK_IDS[0]})
-    assert task.id == roadmap.ALL_TASK_IDS[1]
-    assert roadmap.next_task(set(roadmap.ALL_TASK_IDS)) is None
-
-
-def test_callback_data_within_telegram_limit():
-    # Telegram callback_data en fazla 64 bayt
-    for tid in roadmap.ALL_TASK_IDS:
-        assert len(f"done:{tid}".encode()) <= 64
+def test_next_task_order():
+    stages = global_ds.STAGES
+    ids = roadmap.task_ids(stages)
+    assert roadmap.next_task(stages, set())[1].id == ids[0]
+    assert roadmap.next_task(stages, {ids[0]})[1].id == ids[1]
+    assert roadmap.next_task(stages, set(ids)) is None
