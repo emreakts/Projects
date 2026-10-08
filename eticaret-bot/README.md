@@ -1,21 +1,29 @@
 # Dropshipping Asistanı (Telegram Botu)
 
-Dropshipping'in tüm modellerini baştan sona yöneten Telegram botu. Bot 3 dala ayrılır, her dalın
-kendi yol haritası, ürün kriterleri ve hesaplama araçları vardır.
+Kullanıcıyı açıklamayla oyalamadan doğrudan yapması gereken adıma yönlendiren dropshipping botu.
+
+- **İlk `/start`:** 6 soruluk test → en uygun model otomatik seçilir → ilk adım "nasıl yapılır" talimatıyla açılır.
+- **Sonraki `/start`:** Doğrudan sıradaki adım. "✅ Yaptım, sıradaki" ile ilerlenir.
+- **☰ Menü:** Araçlar (ürün analizi, kâr hesabı, reklam testi), tüm adımlar, model değiştirme, temel bilgiler.
 
 | Dal | Model | Durum |
 |---|---|---|
-| 🅰️ Yurt İçi | Türk tedarikçi (XML bayilik) → Trendyol, Hepsiburada, kendi site | Ön sürüm (genel e-ticaret içeriği) |
+| 🅰️ Yurt İçi | Türk tedarikçi (XML bayilik) + entegrasyon yazılımı → Trendyol | ✅ Hazır (8 aşama, 27 adım) |
 | 🅱️ E-İhracat | Türk ürünleri → Etsy, Amazon, Shopify ile yurt dışına (ETGB) | Hazırlanıyor |
 | 🅲 Global | Shopify + CJ / AliExpress / ABD depolu tedarikçiler → ABD, UK, AB, CA, AU | ✅ Hazır |
 
-## 🎓 Başlangıç Akademisi ve model testi
+## Model testi ve temel bilgiler
 
-- **🎓 E-Ticarete Başlangıç Akademisi:** Sıfırdan başlayanlar için 9 kısa ders: iş modelleri, satış
-  kanalları, birim ekonomisi, ürün seçimi, tedarik, yasal temeller, listeleme ve pazarlama, operasyon,
-  ilk 30 gün planı. Bitirilen dersler kaydedilir.
-- **🧭 Bana uygun model hangisi?:** 6 soruluk test; bütçe, İngilizce, risk iştahı, reklam ilgisi,
-  zaman ve hedefe göre A / B / C dallarından birini önerir.
+- **🧭 Model testi:** Bütçe, İngilizce, yurt dışı şirkete hazır olma, reklam ilgisi, zaman ve hedefe göre
+  hazır dallar içinden en uygununu seçer ve kaydeder.
+- **🎓 Temel bilgiler (menüde, isteğe bağlı):** 9 kısa ders: iş modelleri, satış kanalları, birim
+  ekonomisi, ürün seçimi, tedarik, yasal temeller, listeleme ve pazarlama, operasyon, ilk 30 gün.
+
+## 🅰️ Yurt İçi Dropshipping
+
+Plan → şirket ve yasal hazırlık (vergi levhası, e-arşiv, KEP, IBAN) → XML tedarikçi → Trendyol
+mağazası → XML entegrasyonu → listeleme ve fiyat → sipariş ve hizmet puanı → satış ve büyüme.
+Her adımda talimat; 🔍 Ürün Analizi ve 💰 Kâr Hesabı (TL).
 
 ## 🅲 Global Dropshipping
 
@@ -92,7 +100,7 @@ Kullanıcı ilerlemesi `dropshipping-data` volume'unda saklanır, güncellemede 
 
 ## Komutlar
 
-`/start` `/menu` `/akademi` `/test` `/a` `/b` `/c` `/iptal` `/sifirla` `/yardim`
+`/start` (sıradaki adım) `/menu` `/test` `/a` `/b` `/c` (modeli seç) `/akademi` `/iptal` `/sifirla` (baştan başla) `/yardim`
 
 ## Testler
 
@@ -119,6 +127,6 @@ ve akışları otomatik oluşur.
 
 ## Planlanan
 
-- 🅰️ Yurt içi: XML tedarikçi akışı, fiyat/stok senkronu, pazaryeri kuralları
+- 🅰️ Yurt içi: tedarikçi ve entegrasyon yazılımı karşılaştırma, ikinci pazaryeri
 - 🅱️ E-ihracat: ETGB, Etsy/Amazon süreçleri, uluslararası kargo hesabı
 - 🅲 Global: tedarikçi karşılaştırma, reklam metni/hook üretimi, haftalık KPI raporu

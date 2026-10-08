@@ -1,16 +1,19 @@
-"""Telegram bot: ana menü, dropshipping dalları ve dallara ait akışlar.
+"""Telegram bot: kullanıcıyı açıklama yapmadan doğrudan yapması gereken adıma yönlendirir.
+
+Akış: /start → model seçili değilse 6 soruluk test → en uygun model kaydedilir → ilk adım.
+Model seçiliyse /start doğrudan sıradaki adımı (nasıl yapılır talimatıyla) gösterir.
 
 Callback verisi şeması:
-  menu, help, cancel
-  edu                     akademi ders listesi
+  menu, help, cancel, models
+  edu                     temel bilgiler (akademi) ders listesi
   ls:<n> / lsd:<n>        n. ders / n. dersi bitir ve sonrakine geç
   qz, qa:<cevaplar>       model testi; cevaplar seçilen seçenek indeksleri (ör. qa:021)
-  br:<dal>                dal ana sayfası
-  rm:<dal>                dal yol haritası
+  br:<dal>                modeli seç ve sıradaki adıma git
+  rm:<dal>                tüm adımlar (yol haritası)
   st:<aşama id>           aşama görünümü (ör. st:c.sirket)
-  tk:<görev id>           görev detayı ve "nasıl yapılır" rehberi
+  tk:<görev id>           görev ve "nasıl yapılır" talimatı
   tg:<görev id>           görevin işaretini kaldır / koy
-  guide:<dal>             adım adım rehber: ilk tamamlanmamış görev
+  guide:<dal>             sıradaki adım: ilk tamamlanmamış görev
   done:<görev id>         görevi tamamla ve sıradakine geç
   ps:<dal>                ürün analizini başlat
   pa:<kriter>:<puan>      ürün analizi cevabı
@@ -73,50 +76,65 @@ async def _reply(update: Update, text: str, markup: InlineKeyboardMarkup | None 
 
 
 def _nav(branch: Branch | None = None) -> list[Btn]:
-    row = [Btn("🏠 Ana Menü", callback_data="menu")]
+    row = [Btn("☰ Menü", callback_data="menu")]
     if branch:
-        row.insert(0, Btn(f"⬅️ {branch.title}", callback_data=f"br:{branch.id}"))
+        row.insert(0, Btn("📍 Sıradaki adım", callback_data=f"guide:{branch.id}"))
     return row
+
+
+def _user_branch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Branch | None:
+    branch_id = _storage(context).get_branch(update.effective_user.id)
+    branch = BRANCHES.get(branch_id) if branch_id else None
+    return branch if branch and branch.ready else None
 
 
 # ---------- Genel ----------
 
-WELCOME = (
-    "👋 <b>Dropshipping Asistanına hoş geldin!</b>\n\n"
-    "E-ticarete sıfırdan başlamandan ilk satışına ve büyümene kadar seni adım adım yönlendiririm.\n\n"
-    "🎓 <b>Yeniysen buradan başla:</b> Başlangıç Akademisi, e-ticaretin temellerini 9 kısa derste anlatır.\n"
-    "🧭 <b>Bana uygun model:</b> 6 soruda hangi dropshipping modelinin sana uyduğunu bulur.\n\n"
-    "<b>Dropshipping dalları</b>\n"
-    "🅰️ <b>Yurt İçi:</b> Türk tedarikçi (XML bayilik) → Trendyol, Hepsiburada, kendi site\n"
-    "🅱️ <b>E-İhracat:</b> Türk ürünleri → Etsy, Amazon, Shopify ile yurt dışına\n"
-    "🅲 <b>Global:</b> Shopify + CJ/AliExpress tedarikçileri → ABD, UK, AB müşterileri"
-)
-
 HELP = (
-    "<b>Komutlar</b>\n"
-    "/start veya /menu: Ana menü\n"
-    "/akademi: E-Ticarete Başlangıç Akademisi\n"
-    "/test: Bana uygun model testi\n"
-    "/a, /b, /c: İlgili dropshipping dalına git\n"
+    "/start: Sıradaki adımın\n"
+    "/menu: Menü (araçlar, tüm adımlar, model değiştir)\n"
+    "/test: Sana uygun modeli yeniden bul\n"
     "/iptal: Devam eden analizi/hesabı iptal et\n"
-    "/sifirla: Tüm yol haritası ilerlemeni sıfırla\n\n"
-    "Her dalda: 🧭 Adım Adım Rehber, 🗺 Yol Haritası, 🔍 Ürün Analizi ve dala özel hesaplama araçları var.\n"
-    "Rehber seni ilk tamamlanmamış adıma götürür ve her adımın nasıl yapılacağını anlatır."
+    "/sifirla: Her şeyi sıfırla ve baştan başla"
 )
 
 
-def main_menu() -> InlineKeyboardMarkup:
-    rows = [
-        [Btn("🎓 E-Ticarete Başlangıç Akademisi", callback_data="edu")],
-        [Btn("🧭 Bana uygun model hangisi?", callback_data="qz")],
-    ]
-    rows += [[Btn(b.title + ("" if b.ready else " 🚧"), callback_data=f"br:{b.id}")] for b in BRANCHES.values()]
-    rows.append([Btn("ℹ️ Yardım", callback_data="help")])
-    return InlineKeyboardMarkup(rows)
+def menu_view(branch: Branch | None, done: set[str]) -> tuple[str, InlineKeyboardMarkup]:
+    if branch is None:
+        text = "☰ <b>Menü</b>"
+        rows = [
+            [Btn("🚀 Başla: sana uygun yolu bul (6 soru)", callback_data="qz")],
+            [Btn("🔀 Modeli kendim seçeceğim", callback_data="models")],
+        ]
+    else:
+        ids = roadmap.task_ids(branch.stages)
+        text = (
+            f"☰ <b>Menü</b> · {branch.title}\n"
+            f"İlerleme: {roadmap.progress_bar(sum(t in done for t in ids), len(ids))}"
+        )
+        rows = [[Btn("📍 Şimdi ne yapmalıyım?", callback_data=f"guide:{branch.id}")]]
+        tools = [Btn("🔍 Ürün Analizi", callback_data=f"ps:{branch.id}")] if branch.criteria else []
+        tools += [Btn(t.button, callback_data=f"fm:{branch.id}:{t.id}") for t in branch.tools]
+        rows += [tools[i : i + 2] for i in range(0, len(tools), 2)]
+        rows.append([Btn("🗺 Tüm adımlar", callback_data=f"rm:{branch.id}")])
+        rows.append([Btn("🔀 Model değiştir", callback_data="models"), Btn("🧭 Testi tekrar çöz", callback_data="qz")])
+    rows.append([Btn("🎓 Temel bilgiler", callback_data="edu"), Btn("ℹ️ Komutlar", callback_data="help")])
+    return text, InlineKeyboardMarkup(rows)
+
+
+async def show_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    done = _storage(context).done_tasks(update.effective_user.id)
+    text, markup = menu_view(_user_branch(update, context), done)
+    await _reply(update, text, markup)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await _reply(update, WELCOME, main_menu())
+    """Model seçiliyse doğrudan sıradaki adım; değilse modeli bulmak için test."""
+    branch = _user_branch(update, context)
+    if branch:
+        await _render_guide(update, context, branch)
+    else:
+        await _render_quiz(update, "")
 
 
 async def show_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -125,7 +143,8 @@ async def show_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def reset_progress(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     _storage(context).reset(update.effective_user.id)
-    await _reply(update, "🔄 Yol haritası ilerlemen sıfırlandı.", main_menu())
+    await _reply(update, "🔄 Sıfırlandı. Baştan başlayalım.")
+    await _render_quiz(update, "")
 
 
 async def stale_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -145,13 +164,8 @@ async def show_academy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         [Btn(("✅ " if _lesson_id(n) in done else "⬜ ") + f"{n}. {lesson.title}", callback_data=f"ls:{n}")]
         for n, lesson in enumerate(academy.LESSONS, 1)
     ]
-    rows.append([Btn("🧭 Bana uygun model hangisi?", callback_data="qz")])
     rows.append(_nav())
-    text = (
-        "🎓 <b>E-Ticarete Başlangıç Akademisi</b>\n\n"
-        "Sıfırdan başlayan biri için e-ticaretin temelleri, kısa derslerle. Sırayla gitmeni öneririm.\n\n"
-        f"İlerleme: {roadmap.progress_bar(finished, len(academy.LESSONS))}"
-    )
+    text = f"🎓 <b>Temel bilgiler</b> · {roadmap.progress_bar(finished, len(academy.LESSONS))}"
     await _reply(update, text, InlineKeyboardMarkup(rows))
 
 
@@ -166,7 +180,7 @@ def lesson_view(n: int) -> tuple[str, InlineKeyboardMarkup]:
     if n < total:
         rows = [[Btn("✅ Anladım, sonraki ders", callback_data=f"lsd:{n}")]]
     else:
-        rows = [[Btn("✅ Bitirdim, testi çöz", callback_data=f"lsd:{n}")]]
+        rows = [[Btn("✅ Bitirdim", callback_data=f"lsd:{n}")]]
     nav = []
     if n > 1:
         nav.append(Btn("⬅️ Önceki", callback_data=f"ls:{n - 1}"))
@@ -174,7 +188,7 @@ def lesson_view(n: int) -> tuple[str, InlineKeyboardMarkup]:
         nav.append(Btn("Sonraki ➡️", callback_data=f"ls:{n + 1}"))
     if nav:
         rows.append(nav)
-    rows.append([Btn("📚 Dersler", callback_data="edu"), Btn("🏠 Ana Menü", callback_data="menu")])
+    rows.append([Btn("📚 Dersler", callback_data="edu"), Btn("☰ Menü", callback_data="menu")])
     return text, InlineKeyboardMarkup(rows)
 
 
@@ -200,43 +214,30 @@ async def finish_lesson(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     storage = _storage(context)
     storage.mark_done(update.effective_user.id, _lesson_id(n))
     if n == len(academy.LESSONS):
-        await _render_quiz(update, "")
+        await start(update, context)
         return
     text, markup = lesson_view(n + 1)
     await _reply(update, text, markup)
 
 
 def quiz_view(answers: str) -> tuple[str, InlineKeyboardMarkup]:
-    """answers: şimdiye kadar seçilen seçenek indeksleri. Hepsi cevaplandıysa sonuç ekranı."""
-    if len(answers) < len(academy.QUIZ):
-        i = len(answers)
-        q = academy.QUIZ[i]
-        intro = "🧭 <b>Bana uygun model hangisi?</b>\n\n" if i == 0 else ""
-        text = f"{intro}<b>Soru {i + 1}/{len(academy.QUIZ)}</b>\n\n{q.question}"
-        rows = [[Btn(label, callback_data=f"qa:{answers}{k}")] for k, (label, _) in enumerate(q.options)]
-        rows.append(_nav())
-        return text, InlineKeyboardMarkup(rows)
+    """answers: şimdiye kadar seçilen seçenek indeksleri (hepsi cevaplanmamış olmalı)."""
+    i = len(answers)
+    q = academy.QUIZ[i]
+    intro = "🧭 Sana en uygun yolu bulmam için 6 kısa soru.\n\n" if i == 0 else ""
+    text = f"{intro}<b>{i + 1}/{len(academy.QUIZ)}</b> {q.question}"
+    rows = [[Btn(label, callback_data=f"qa:{answers}{k}")] for k, (label, _) in enumerate(q.options)]
+    return text, InlineKeyboardMarkup(rows)
 
+
+def quiz_result(answers: str) -> tuple[str, str]:
+    """Hazır dallar içinden en uygununu seçer. (dal id, sonuç başlığı) döner."""
     order = academy.recommend(answers)
-    scores = academy.quiz_scores(answers)
-    best = BRANCHES[order[0]]
-    lines = [
-        "🧭 <b>Sonuç</b>\n",
-        f"Sana en uygun model: <b>{best.title}</b>\n",
-        academy.QUIZ_REASONS[best.id],
-        "",
-        "Puanlar: " + ", ".join(f"{BRANCHES[b].title} {scores[b]}" for b in order),
-    ]
-    if not best.ready:
-        lines.append("\n🚧 Bu dal henüz hazırlanıyor. O zamana kadar akademiye ve ikinci sıradaki dala göz atabilirsin.")
-    lines.append("\nKarar senin; test sadece yön gösterir.")
-    rows = [
-        [Btn(("➡️ " if b == best.id else "") + BRANCHES[b].title + ("" if BRANCHES[b].ready else " 🚧"), callback_data=f"br:{b}")]
-        for b in order
-    ]
-    rows.append([Btn("🔁 Testi tekrar çöz", callback_data="qz")])
-    rows.append(_nav())
-    return "\n".join(lines), InlineKeyboardMarkup(rows)
+    chosen = next(b for b in order if BRANCHES[b].ready)
+    header = f"✅ <b>Senin yolun: {BRANCHES[chosen].title}</b>\n{academy.QUIZ_REASONS[chosen]}\n"
+    if order[0] != chosen:
+        header += f"<i>({BRANCHES[order[0]].title} sana daha da uygun ama henüz hazır değil; hazır olunca haber vereceğim.)</i>\n"
+    return chosen, header + "\n"
 
 
 async def _render_quiz(update: Update, answers: str) -> None:
@@ -256,33 +257,45 @@ async def answer_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     if not valid:
         await update.callback_query.answer("Bu test eski, yeniden başlat.", show_alert=True)
         return
-    await _render_quiz(update, answers)
+    if len(answers) < len(academy.QUIZ):
+        await _render_quiz(update, answers)
+        return
+    chosen, header = quiz_result(answers)
+    _storage(context).set_branch(update.effective_user.id, chosen)
+    await _render_guide(update, context, BRANCHES[chosen], header)
 
 
-# ---------- Dal ana sayfası ----------
+# ---------- Model seçimi ----------
 
-def _branch_home(branch: Branch) -> InlineKeyboardMarkup:
-    if not branch.ready:
-        return InlineKeyboardMarkup([_nav()])
+def models_view() -> tuple[str, InlineKeyboardMarkup]:
     rows = [
-        [Btn("🧭 Adım Adım Rehber", callback_data=f"guide:{branch.id}")],
-        [Btn("🗺 Yol Haritası", callback_data=f"rm:{branch.id}")],
-        [Btn("🔍 Ürün Analizi", callback_data=f"ps:{branch.id}")],
+        [Btn(b.title + ("" if b.ready else " 🚧 yakında"), callback_data=f"br:{b.id}")]
+        for b in BRANCHES.values()
     ]
-    tool_buttons = [Btn(t.button, callback_data=f"fm:{branch.id}:{t.id}") for t in branch.tools]
-    rows += [tool_buttons[i : i + 2] for i in range(0, len(tool_buttons), 2)]
     rows.append(_nav())
-    return InlineKeyboardMarkup(rows)
+    return "🔀 Hangi modelle ilerleyelim?", InlineKeyboardMarkup(rows)
 
 
-async def show_branch(update: Update, context: ContextTypes.DEFAULT_TYPE, branch_id: str | None = None) -> None:
+async def show_models(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    text, markup = models_view()
+    await _reply(update, text, markup)
+
+
+async def choose_branch(update: Update, context: ContextTypes.DEFAULT_TYPE, branch_id: str | None = None) -> None:
     branch = BRANCHES[branch_id or _arg(update)]
-    await _reply(update, branch.summary, _branch_home(branch))
+    if not branch.ready:
+        if update.callback_query:
+            await update.callback_query.answer("Bu model henüz hazırlanıyor.", show_alert=True)
+        else:
+            await _reply(update, "🚧 Bu model henüz hazırlanıyor.", InlineKeyboardMarkup([_nav()]))
+        return
+    _storage(context).set_branch(update.effective_user.id, branch.id)
+    await _render_guide(update, context, branch)
 
 
 def _branch_command(branch_id: str):
     async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        await show_branch(update, context, branch_id)
+        await choose_branch(update, context, branch_id)
 
     return handler
 
@@ -300,9 +313,7 @@ async def show_roadmap(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         rows.append([Btn(f"{s.title}  ({mark})", callback_data=f"st:{s.id}")])
     rows.append(_nav(branch))
     text = (
-        f"🗺 <b>{branch.title}: Yol Haritası</b>\n\n"
-        f"İlerleme: {roadmap.progress_bar(sum(t in done for t in ids), len(ids))}\n\n"
-        "Bir aşama seç:"
+        f"🗺 <b>Tüm adımlar</b> · {roadmap.progress_bar(sum(t in done for t in ids), len(ids))}"
     )
     await _reply(update, text, InlineKeyboardMarkup(rows))
 
@@ -311,14 +322,13 @@ def _stage_view(branch: Branch, stage: roadmap.Stage, done: set[str]) -> tuple[s
     d, n = roadmap.stage_progress(stage, done)
     text = (
         f"<b>{stage.title}</b>\n{roadmap.progress_bar(d, n)}\n\n"
-        f"💡 {html.escape(stage.guide, quote=False)}\n\n"
-        "Detaylı rehberini görmek için bir adıma dokun:"
+        f"💡 {html.escape(stage.guide, quote=False)}"
     )
     rows = [
         [Btn(("✅ " if t.id in done else "⬜ ") + t.text, callback_data=f"tk:{t.id}")]
         for t in stage.tasks
     ]
-    rows.append([Btn("⬅️ Yol Haritası", callback_data=f"rm:{branch.id}"), Btn("🏠 Ana Menü", callback_data="menu")])
+    rows.append([Btn("🗺 Tüm adımlar", callback_data=f"rm:{branch.id}"), Btn("☰ Menü", callback_data="menu")])
     return text, InlineKeyboardMarkup(rows)
 
 
@@ -340,27 +350,26 @@ def _tool_shortcuts(branch: Branch, task: roadmap.Task) -> list[Btn]:
     return buttons
 
 
-def task_view(branch: Branch, task_id: str, done: set[str]) -> tuple[str, InlineKeyboardMarkup]:
+def task_view(branch: Branch, task_id: str, done: set[str], header: str = "") -> tuple[str, InlineKeyboardMarkup]:
     stage, task = roadmap.find_task(branch.stages, task_id)
     position = stage.tasks.index(task) + 1
     ids = roadmap.task_ids(branch.stages)
     is_done = task.id in done
 
     lines = [
-        f"🧭 <b>{stage.title}</b> · Adım {position}/{len(stage.tasks)}\n",
+        f"{header}📍 {stage.title} · {position}/{len(stage.tasks)}\n",
         f"{'✅' if is_done else '👉'} <b>{html.escape(task.text, quote=False)}</b>\n",
     ]
     if task.how:
-        lines.append("📋 <b>Nasıl yapılır</b>")
         lines += [f"{i}. {html.escape(step, quote=False)}" for i, step in enumerate(task.how, 1)]
     else:
         lines.append(f"💡 {html.escape(stage.guide, quote=False)}")
-    lines.append(f"\nGenel ilerleme: {roadmap.progress_bar(sum(t in done for t in ids), len(ids))}")
+    lines.append(f"\n{roadmap.progress_bar(sum(t in done for t in ids), len(ids))}")
 
     if is_done:
         rows = [[Btn("↩️ Tamamlanmadı olarak işaretle", callback_data=f"tg:{task.id}")]]
     else:
-        rows = [[Btn("✅ Tamamladım, sıradakine geç", callback_data=f"done:{task.id}")]]
+        rows = [[Btn("✅ Yaptım, sıradaki", callback_data=f"done:{task.id}")]]
     shortcuts = _tool_shortcuts(branch, task)
     if shortcuts:
         rows.append(shortcuts)
@@ -372,24 +381,23 @@ def task_view(branch: Branch, task_id: str, done: set[str]) -> tuple[str, Inline
         nav.append(Btn("Sonraki ➡️", callback_data=f"tk:{next_id}"))
     if nav:
         rows.append(nav)
-    rows.append([Btn("📂 Aşama", callback_data=f"st:{stage.id}"), Btn("🗺 Yol Haritası", callback_data=f"rm:{branch.id}")])
-    rows.append(_nav(branch))
+    rows.append([Btn("🗺 Tüm adımlar", callback_data=f"rm:{branch.id}"), Btn("☰ Menü", callback_data="menu")])
     return "\n".join(lines), InlineKeyboardMarkup(rows)
 
 
-async def _render_task(update: Update, context: ContextTypes.DEFAULT_TYPE, task_id: str) -> None:
+async def _render_task(update: Update, context: ContextTypes.DEFAULT_TYPE, task_id: str, header: str = "") -> None:
     done = _storage(context).done_tasks(update.effective_user.id)
-    text, markup = task_view(branch_of_task(task_id), task_id, done)
+    text, markup = task_view(branch_of_task(task_id), task_id, done, header)
     await _reply(update, text, markup)
 
 
-async def _render_guide(update: Update, context: ContextTypes.DEFAULT_TYPE, branch: Branch) -> None:
+async def _render_guide(update: Update, context: ContextTypes.DEFAULT_TYPE, branch: Branch, header: str = "") -> None:
     nxt = roadmap.next_task(branch.stages, _storage(context).done_tasks(update.effective_user.id))
     if nxt is None:
-        text = f"🎉 {branch.title} yol haritasını tamamladın! Ölçekleme adımlarını haftalık tekrarla."
-        await _reply(update, text, InlineKeyboardMarkup([[Btn("🗺 Yol Haritası", callback_data=f"rm:{branch.id}")], _nav(branch)]))
+        text = f"{header}🎉 Tüm adımları tamamladın! Büyüme adımlarını haftalık tekrarla."
+        await _reply(update, text, InlineKeyboardMarkup([[Btn("🗺 Tüm adımlar", callback_data=f"rm:{branch.id}")], _nav()]))
         return
-    await _render_task(update, context, nxt[1].id)
+    await _render_task(update, context, nxt[1].id, header)
 
 
 async def show_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -439,7 +447,7 @@ async def ps_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["ps"] = {"branch": branch.id, "answers": {}, "index": 0}
     await _reply(
         update,
-        f"🔍 <b>Ürün Analizi</b> ({branch.title})\n\nAnaliz etmek istediğin ürünün adını yaz:",
+        "🔍 Ürünün adını yaz:",
     )
     return PS_NAME
 
@@ -561,19 +569,25 @@ def _clear(context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     _clear(context)
-    await _reply(update, "✖️ İptal edildi.", main_menu())
+    await show_menu(update, context)
     return ConversationHandler.END
 
 
 async def to_menu(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     _clear(context)
+    await show_menu(update, context)
+    return ConversationHandler.END
+
+
+async def to_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    _clear(context)
     await start(update, context)
     return ConversationHandler.END
 
 
-async def to_branch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+async def to_guide(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     _clear(context)
-    await show_branch(update, context)
+    await show_guide(update, context)
     return ConversationHandler.END
 
 
@@ -585,8 +599,9 @@ def build_application(token: str, db_path: str) -> Application:
         CommandHandler("iptal", cancel),
         CallbackQueryHandler(cancel, pattern="^cancel$"),
         CallbackQueryHandler(to_menu, pattern="^menu$"),
-        CallbackQueryHandler(to_branch, pattern=r"^br:\w+$"),
-        CommandHandler(["start", "menu"], to_menu),
+        CallbackQueryHandler(to_guide, pattern=r"^guide:\w+$"),
+        CommandHandler("menu", to_menu),
+        CommandHandler("start", to_start),
     ]
     app.add_handler(
         ConversationHandler(
@@ -608,21 +623,23 @@ def build_application(token: str, db_path: str) -> Application:
         )
     )
 
-    app.add_handler(CommandHandler(["start", "menu"], start))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("menu", show_menu))
     app.add_handler(CommandHandler("yardim", show_help))
     app.add_handler(CommandHandler("sifirla", reset_progress))
     app.add_handler(CommandHandler("akademi", show_academy))
     app.add_handler(CommandHandler("test", start_quiz))
     for branch_id in BRANCHES:
         app.add_handler(CommandHandler(branch_id, _branch_command(branch_id)))
-    app.add_handler(CallbackQueryHandler(start, pattern="^menu$"))
+    app.add_handler(CallbackQueryHandler(show_menu, pattern="^menu$"))
+    app.add_handler(CallbackQueryHandler(show_models, pattern="^models$"))
     app.add_handler(CallbackQueryHandler(show_help, pattern="^help$"))
     app.add_handler(CallbackQueryHandler(show_academy, pattern="^edu$"))
     app.add_handler(CallbackQueryHandler(show_lesson, pattern=r"^ls:\d+$"))
     app.add_handler(CallbackQueryHandler(finish_lesson, pattern=r"^lsd:\d+$"))
     app.add_handler(CallbackQueryHandler(start_quiz, pattern="^qz$"))
     app.add_handler(CallbackQueryHandler(answer_quiz, pattern=r"^qa:\d*$"))
-    app.add_handler(CallbackQueryHandler(show_branch, pattern=r"^br:\w+$"))
+    app.add_handler(CallbackQueryHandler(choose_branch, pattern=r"^br:\w+$"))
     app.add_handler(CallbackQueryHandler(show_roadmap, pattern=r"^rm:\w+$"))
     app.add_handler(CallbackQueryHandler(show_stage, pattern=r"^st:[\w.]+$"))
     app.add_handler(CallbackQueryHandler(show_task, pattern=r"^tk:[\w.]+$"))

@@ -57,9 +57,9 @@ def test_validate_field_rules():
     assert _validate(Field("x", "?"), "12,5") == 12.5
 
 
-def test_global_tasks_all_have_how_to():
-    b = BRANCHES["c"]
-    assert all(t.how for s in b.stages for t in s.tasks)
+@pytest.mark.parametrize("branch", READY, ids=lambda b: b.id)
+def test_ready_branch_tasks_all_have_how_to(branch):
+    assert all(t.how for s in branch.stages for t in s.tasks)
 
 
 @pytest.mark.parametrize("branch", READY, ids=lambda b: b.id)
@@ -104,3 +104,26 @@ def test_load_env_file(tmp_path, monkeypatch):
     assert os.environ["X_TEST_TOKEN"] == "abc:123"
     assert os.environ["X_TEST_DB"] == "onceden.db"
     monkeypatch.delenv("X_TEST_TOKEN")
+
+
+def test_menu_view_with_and_without_branch():
+    from eticaret_bot.bot import menu_view
+
+    _, markup = menu_view(None, set())
+    data = [b.callback_data for row in markup.inline_keyboard for b in row]
+    assert "qz" in data and "models" in data
+    b = BRANCHES["c"]
+    text, markup = menu_view(b, set())
+    data = [b2.callback_data for row in markup.inline_keyboard for b2 in row]
+    assert data[0] == "guide:c" and "ps:c" in data and "fm:c:kar" in data and "fm:c:reklam" in data
+    assert b.title in text
+
+
+def test_task_view_header_prefix():
+    from eticaret_bot.bot import task_view
+
+    b = BRANCHES["a"]
+    first = roadmap.task_ids(b.stages)[0]
+    text, _ = task_view(b, first, set(), header="✅ <b>Senin yolun</b>\n")
+    assert text.startswith("✅ <b>Senin yolun</b>")
+    assert "1." in text  # nasıl yapılır adımları numaralı
