@@ -127,3 +127,21 @@ def test_task_view_header_prefix():
     text, _ = task_view(b, first, set(), header="✅ <b>Senin yolun</b>\n")
     assert text.startswith("✅ <b>Senin yolun</b>")
     assert "1." in text  # nasıl yapılır adımları numaralı
+
+
+@pytest.mark.parametrize("branch", READY, ids=lambda b: b.id)
+def test_task_views_with_quiz_header_fit(branch):
+    from eticaret_bot.bot import quiz_result, task_view
+
+    # En uzun başlık: en çok aşaması olan dalın sonucu
+    _, header = quiz_result("000000" if branch.id == "a" else "222222")
+    for tid in roadmap.task_ids(branch.stages):
+        text, _ = task_view(branch, tid, set(), header)
+        assert len(text) < 4096, tid
+
+
+def test_branch_a_tasks_are_full_lessons():
+    b = BRANCHES["a"]
+    tasks = [t for s in b.stages for t in s.tasks]
+    assert all(t.how and t.done for t in tasks)
+    assert any(t.template for t in tasks)

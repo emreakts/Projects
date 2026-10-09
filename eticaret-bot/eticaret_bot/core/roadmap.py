@@ -11,6 +11,10 @@ class Task:
     id: str
     text: str
     how: tuple[str, ...] = ()  # "Nasıl yapılır" adımları
+    why: str = ""  # neden önemli (tek cümle)
+    warn: tuple[str, ...] = ()  # sık yapılan hatalar
+    template: str = ""  # kopyalanacak hazır mesaj/metin
+    done: str = ""  # adım ne zaman bitmiş sayılır
 
 
 @dataclass(frozen=True)
@@ -21,15 +25,31 @@ class Stage:
     tasks: tuple[Task, ...]
 
 
-def make_stage(
-    branch_id: str, key: str, title: str, guide: str, tasks: list[str | tuple[str, list[str]]]
-) -> Stage:
-    """tasks: görev metni veya (görev metni, nasıl yapılır adımları)."""
+def make_stage(branch_id: str, key: str, title: str, guide: str, tasks: list) -> Stage:
+    """tasks öğeleri: görev metni, (metin, nasıl yapılır adımları) veya
+    {"text", "how", "why", "warn", "template", "done"} sözlüğü."""
     sid = f"{branch_id}.{key}"
     built = []
     for i, t in enumerate(tasks, 1):
-        text, how = (t, []) if isinstance(t, str) else t
-        built.append(Task(f"{sid}.{i}", text, tuple(how)))
+        tid = f"{sid}.{i}"
+        if isinstance(t, str):
+            built.append(Task(tid, t))
+        elif isinstance(t, dict):
+            warn = t.get("warn", ())
+            built.append(
+                Task(
+                    tid,
+                    t["text"],
+                    how=tuple(t.get("how", ())),
+                    why=t.get("why", ""),
+                    warn=(warn,) if isinstance(warn, str) else tuple(warn),
+                    template=t.get("template", ""),
+                    done=t.get("done", ""),
+                )
+            )
+        else:
+            text, how = t
+            built.append(Task(tid, text, tuple(how)))
     return Stage(sid, title, guide, tuple(built))
 
 

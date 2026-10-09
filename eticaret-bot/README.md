@@ -8,7 +8,7 @@ Kullanıcıyı açıklamayla oyalamadan doğrudan yapması gereken adıma yönle
 
 | Dal | Model | Durum |
 |---|---|---|
-| 🅰️ Yurt İçi | Türk tedarikçi (XML bayilik) + entegrasyon yazılımı → Trendyol | ✅ Hazır (8 aşama, 27 adım) |
+| 🅰️ Yurt İçi | Türk tedarikçi (XML bayilik) + entegrasyon yazılımı → Trendyol | ✅ Hazır (8 aşama, 29 adım, ilk satışa kadar) |
 | 🅱️ E-İhracat | Türk ürünleri → Etsy, Amazon, Shopify ile yurt dışına (ETGB) | Hazırlanıyor |
 | 🅲 Global | Shopify + CJ / AliExpress / ABD depolu tedarikçiler → ABD, UK, AB, CA, AU | ✅ Hazır |
 
@@ -21,9 +21,12 @@ Kullanıcıyı açıklamayla oyalamadan doğrudan yapması gereken adıma yönle
 
 ## 🅰️ Yurt İçi Dropshipping
 
-Plan → şirket ve yasal hazırlık (vergi levhası, e-arşiv, KEP, IBAN) → XML tedarikçi → Trendyol
-mağazası → XML entegrasyonu → listeleme ve fiyat → sipariş ve hizmet puanı → satış ve büyüme.
-Her adımda talimat; 🔍 Ürün Analizi ve 💰 Kâr Hesabı (TL).
+Hazırlık → şirket kurulumu (müşavir, vergi levhası, e-arşiv, KEP, IBAN) → XML tedarikçi → Trendyol
+mağazası → entegrasyon (API bilgileri, XML, fiyat kuralı, eşleştirme, pilot yayın) → listeleme →
+ilk satış (reklam, ilk siparişi işleme, günlük rutin, iade) → büyüme.
+
+Her adım bir ders gibi: neden önemli, numaralı talimatlar, gerektiğinde kopyalanacak hazır mesaj
+(müşavire, tedarikçiye), ⚠️ sık yapılan hatalar ve ✔️ "bitti sayılır" ölçütü.
 
 ## 🅲 Global Dropshipping
 

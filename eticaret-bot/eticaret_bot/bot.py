@@ -234,10 +234,13 @@ def quiz_result(answers: str) -> tuple[str, str]:
     """Hazır dallar içinden en uygununu seçer. (dal id, sonuç başlığı) döner."""
     order = academy.recommend(answers)
     chosen = next(b for b in order if BRANCHES[b].ready)
-    header = f"✅ <b>Senin yolun: {BRANCHES[chosen].title}</b>\n{academy.QUIZ_REASONS[chosen]}\n"
+    branch = BRANCHES[chosen]
+    header = f"✅ <b>Senin yolun: {branch.title}</b>\n{academy.QUIZ_REASONS[chosen]}\n"
     if order[0] != chosen:
-        header += f"<i>({BRANCHES[order[0]].title} sana daha da uygun ama henüz hazır değil; hazır olunca haber vereceğim.)</i>\n"
-    return chosen, header + "\n"
+        header += f"<i>({BRANCHES[order[0]].title} sana daha da uygun ama henüz hazır değil.)</i>\n"
+    header += "\n🗺 <b>Satışa kadar adımların:</b>\n" + "\n".join(st.title for st in branch.stages)
+    header += "\n\nHer adımı nasıl yapacağını tek tek göstereceğim. İlk adımın:\n\n"
+    return chosen, header
 
 
 async def _render_quiz(update: Update, answers: str) -> None:
@@ -342,7 +345,7 @@ async def show_stage(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 def _tool_shortcuts(branch: Branch, task: roadmap.Task) -> list[Btn]:
     """Görev metninde adı geçen araçlara kısayol butonları."""
-    content = " ".join((task.text, *task.how))
+    content = " ".join((task.text, task.why, *task.how, *task.warn, task.template, task.done))
     buttons = []
     if "Ürün Analizi" in content and branch.criteria:
         buttons.append(Btn("🔍 Ürün Analizi", callback_data=f"ps:{branch.id}"))
@@ -360,10 +363,21 @@ def task_view(branch: Branch, task_id: str, done: set[str], header: str = "") ->
         f"{header}📍 {stage.title} · {position}/{len(stage.tasks)}\n",
         f"{'✅' if is_done else '👉'} <b>{html.escape(task.text, quote=False)}</b>\n",
     ]
+    if task.why:
+        lines[-1] = lines[-1].rstrip("\n")
+        lines.append(f"<i>{html.escape(task.why, quote=False)}</i>\n")
     if task.how:
         lines += [f"{i}. {html.escape(step, quote=False)}" for i, step in enumerate(task.how, 1)]
     else:
         lines.append(f"💡 {html.escape(stage.guide, quote=False)}")
+    if task.template:
+        lines.append("\n✉️ <b>Hazır mesaj</b> (dokunup kopyala):")
+        lines.append(f"<pre>{html.escape(task.template, quote=False)}</pre>")
+    if task.warn:
+        lines.append("")
+        lines += [f"⚠️ {html.escape(w, quote=False)}" for w in task.warn]
+    if task.done:
+        lines.append(f"\n✔️ <b>Bitti sayılır:</b> {html.escape(task.done, quote=False)}")
     lines.append(f"\n{roadmap.progress_bar(sum(t in done for t in ids), len(ids))}")
 
     if is_done:
