@@ -28,11 +28,16 @@ ilk satış (reklam, ilk siparişi işleme, günlük rutin, iade) → büyüme.
 Her adım bir ders gibi: neden önemli, numaralı talimatlar, gerektiğinde kopyalanacak hazır mesaj
 (müşavire, tedarikçiye), ⚠️ sık yapılan hatalar ve ✔️ "bitti sayılır" ölçütü.
 
+**Karar adımlarında bot araştırmayı kendisi yapıp seçenek sunar** (kategori + komisyon aralıkları,
+bütçe/otomasyon kombinasyonları, müşavir türü, şirket türü, e-arşiv yöntemi, KEP sağlayıcısı,
+tedarikçi adayları, entegrasyon yazılımları). Seçim kaydedilir ve sonraki adımlar ona göre
+kişiselleşir (ör. evcil hayvan seçilirse tedarikçi adımında pet tedarikçi adayları çıkar).
+
 ## 🅲 Global Dropshipping
 
-- **🧭 Adım Adım Rehber:** Seni ilk tamamlanmamış adıma götürür. Her adımda numaralı
-  "📋 Nasıl yapılır" talimatları, ilgili araca kısayol, önceki/sonraki adım ve
-  "✅ Tamamladım, sıradakine geç" butonu var.
+- **Ders formatı + hazır seçenekler:** Hedef pazar, mağaza tipi, şirket eyaleti/ülkesi (New Mexico,
+  Wyoming, Delaware, UK), kuruluş yolu, banka, ödeme sağlayıcısı, niş ve tedarikçi platformu
+  (CJ, Spocket, Zendrop, DSers) adımlarında bot araştırılmış seçenekleri artı/eksi ve ücretleriyle sunar.
 - **🗺 Yol Haritası:** 8 aşama, 46 adım. Hedef pazar ve bütçe, yurt dışı şirket ve ödeme
   (LLC, EIN, Stripe), ürün araştırması, tedarikçi ve DDP kargo, Shopify mağaza, reklam testi,
   operasyon, ölçekleme

@@ -25,3 +25,15 @@ def test_profile_branch_and_reset(tmp_path):
     assert s.done_tasks(1) == {"c.pazar.1"}
     s.reset(1)
     assert s.get_branch(1) is None and s.done_tasks(1) == set()
+
+
+def test_choices(tmp_path):
+    s = Storage(tmp_path / "t.db")
+    assert s.choices(1) == {}
+    s.set_choice(1, "a.hazirlik.1", "pet")
+    s.set_choice(1, "a.hazirlik.1", "mutfak")
+    s.set_choice(1, "a.sirket.2", "sahis")
+    assert s.choices(1) == {"a.hazirlik.1": "mutfak", "a.sirket.2": "sahis"}
+    assert s.choices(2) == {}
+    s.reset(1)
+    assert s.choices(1) == {}

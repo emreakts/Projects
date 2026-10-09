@@ -7,11 +7,11 @@ Panel menü adları zamanla değişebilir; talimatlar bunu belirterek yazıldı.
 
 from __future__ import annotations
 
-from ..core.roadmap import make_stage
+from ..core.roadmap import enrich, make_stage
 
 BRANCH_ID = "a"
 
-STAGES = (
+_BASE = (
     make_stage(
         BRANCH_ID,
         "hazirlik",
@@ -22,15 +22,10 @@ STAGES = (
                 "text": "Satacağın kategoriyi seç",
                 "why": "Tedarikçini, entegrasyonunu ve reklamını bu karara göre seçeceksin; tek kategoriyle başlamak işi yönetilebilir kılar.",
                 "how": [
-                    "trendyol.com'u aç ve ilgini çeken bir kategoriye gir (ör. Ev ve Yaşam → Mutfak).",
-                    "Sıralamayı 'En çok satan' veya 'En çok değerlendirilen' yap; ilk 2 sayfadaki ürünlere bak.",
-                    "Yüzlerce değerlendirmesi olan ürünler talebin kanıtıdır; bunları not al.",
-                    "Kargosu kolay, kırılmayan, beden derdi olmayan kategorileri tercih et: mutfak gereçleri, evcil hayvan, oto aksesuar, hobi, telefon aksesuarı gibi.",
-                    "Kozmetik, gıda, takviye, oyuncak, elektrikli ürün gibi belge/izin isteyen veya iadesi yüksek kategorilerden ilk etapta uzak dur.",
-                    "3 aday kategori yaz, her birinde 5 çok satan ürün örneği not et ve birini seç.",
+                    "Yukarıdaki seçenekleri karşılaştır; kararsızsan mutfak gereçleri veya evcil hayvan ile başla.",
+                    "İstersen seçmeden önce trendyol.com'da o kategoride 'En çok satan' sıralamasına bakıp birkaç ürünü not al.",
                 ],
-                "warn": "Tek bir ürüne değil, bir kategoriye karar veriyorsun; satacağın ürünleri daha sonra tedarikçinin listesinden seçeceksin.",
-                "done": "Tek bir kategori seçtin ve o kategoride 5 çok satan ürün örneği not ettin.",
+                "warn": "Tek bir ürüne değil, bir kategoriye karar veriyorsun; ürünleri daha sonra tedarikçinin listesinden seçeceksin.",
             },
             {
                 "text": "Bütçeni ve zamanını planla",
@@ -124,9 +119,9 @@ STAGES = (
         "XML bayilikte tedarikçi ürün, fiyat ve stok listesini bir XML linkiyle verir; sipariş gelince ürünü müşterine o gönderir.",
         [
             {
-                "text": "Kategorinde XML veren tedarikçileri listele",
+                "text": "{secim:a.hazirlik.1|Kategorin} için XML veren tedarikçileri listele",
                 "how": [
-                    "Google'da şu aramaları yap: '<kategori> xml bayilik', '<kategori> dropshipping tedarikçi', '<kategori> toptan xml'.",
+                    "Google'da şu aramaları yap: '{secim:a.hazirlik.1|<kategori>} xml bayilik', '{secim:a.hazirlik.1|<kategori>} dropshipping tedarikçi', '{secim:a.hazirlik.1|<kategori>} toptan xml'.",
                     "XML bayilik platformlarına ve büyük toptancı sitelerine bak; 'bayi ol' veya 'XML bayilik' sayfalarını bul.",
                     "Trendyol'da kategorindeki ürünlere bak: aynı ürünü aynı görselle çok satıcı satıyorsa arkasında ortak bir tedarikçi vardır; ürün adını Google'da aratarak ona ulaşabilirsin.",
                     "Her aday için not al: site, ürün sayısı, bayilik ücreti, iletişim bilgisi.",
@@ -398,3 +393,285 @@ STAGES = (
         ],
     ),
 )
+
+
+# ---------- Botun araştırıp sunduğu seçenekler (karar adımları) ----------
+# Kaynak: 2026 tarihli pazaryeri/entegratör rehberleri ve firma sayfaları. Komisyon ve fiyatlar
+# kaynaklar arasında farklılık gösterdiği için aralık olarak verildi; kullanıcıya teyit ettirilir.
+
+_KOMISYON_NOTU = "Komisyon oranları kaynaklara göre; güncelini satıcı panelinden teyit et."
+
+OPTIONS = {
+    "a.hazirlik.1": {
+        "options": [
+            {
+                "key": "mutfak",
+                "title": "Mutfak gereçleri",
+                "lines": [
+                    "Örnek: doğrayıcı, saklama kabı, organizer, pratik mutfak aletleri",
+                    "Komisyon: yaklaşık %11-19",
+                    "Artı: her evde ihtiyaç, beden derdi yok, video ile kolay anlatılır",
+                    "Eksi: cam/porselen kırılma riski taşır; kırılmayan ürünleri seç",
+                ],
+                "pick": _KOMISYON_NOTU,
+            },
+            {
+                "key": "pet",
+                "title": "Evcil hayvan ürünleri",
+                "lines": [
+                    "Örnek: mama kabı, tasma, oyuncak, tımar ürünleri, kedi kumu aksesuarları",
+                    "Komisyon: yaklaşık %15-18",
+                    "Artı: tekrar eden alım, sadık müşteri; XML veren pet tedarikçileri mevcut",
+                    "Eksi: mama gibi ağır ürünlerde kargo maliyeti yüksek",
+                ],
+                "pick": _KOMISYON_NOTU,
+            },
+            {
+                "key": "evduzen",
+                "title": "Ev düzenleme ve dekorasyon",
+                "lines": [
+                    "Örnek: düzenleyici kutular, askılar, dekoratif objeler, mum, duvar dekoru",
+                    "Komisyon: Ev ve Yaşam altında yaklaşık %11-22",
+                    "Artı: geniş ürün yelpazesi, hafif ürünler, görselle iyi satılır",
+                    "Eksi: rekabet yüksek; başlık ve görselle fark yaratman gerekir",
+                ],
+                "pick": _KOMISYON_NOTU,
+            },
+            {
+                "key": "oto",
+                "title": "Oto aksesuar",
+                "lines": [
+                    "Örnek: araç içi düzenleyici, telefon tutucu, temizlik ürünleri, koltuk aksesuarı",
+                    "Komisyon: yaklaşık %16,5",
+                    "Artı: dayanıklı, küçük ürünler; iade oranı genelde düşük",
+                    "Eksi: araç modeline özel ürünlerde uyumsuzluk iadesi olabilir",
+                ],
+                "pick": _KOMISYON_NOTU,
+            },
+            {
+                "key": "telefon",
+                "title": "Telefon aksesuarı",
+                "lines": [
+                    "Örnek: kılıf, ekran koruyucu, şarj kablosu, araç tutucu",
+                    "Komisyon: alt kategoriye göre %15-27 (geniş aralık)",
+                    "Artı: yüksek arama hacmi, hafif ve ucuz kargo",
+                    "Eksi: fiyat rekabeti sert; model uyumsuzluğu iadesi çok",
+                ],
+                "pick": _KOMISYON_NOTU,
+            },
+        ]
+    },
+    "a.hazirlik.2": {
+        "options": [
+            {
+                "key": "ekonomik",
+                "title": "Ekonomik başlangıç",
+                "lines": [
+                    "Fatura: GİB'in ücretsiz e-arşiv portalı (faturaları elle kesersin)",
+                    "Entegrasyon: XML bayilik odaklı uygun fiyatlı bir araç",
+                    "Reklam: ilk ay yok, sadece ürün kalitesi ve fiyatla",
+                    "Uygun: günde birkaç siparişe kadar; zamanın bol, bütçen kısıtlı",
+                ],
+                "pick": "Sonraki adımlarda bu kombinasyona uygun seçenekleri öne çıkaracağım.",
+            },
+            {
+                "key": "dengeli",
+                "title": "Dengeli (önerilen)",
+                "lines": [
+                    "Fatura: özel e-arşiv sağlayıcısı (faturalar otomatik kesilir)",
+                    "Entegrasyon: XML destekli, sipariş aktaran bir yazılım",
+                    "Reklam: en iyi 3-5 ürüne küçük günlük bütçe",
+                    "Uygun: çoğu yeni başlayan için doğru denge",
+                ],
+                "pick": "Sonraki adımlarda bu kombinasyona uygun seçenekleri öne çıkaracağım.",
+            },
+            {
+                "key": "hizli",
+                "title": "Hızlı büyüme",
+                "lines": [
+                    "Fatura: özel e-arşiv sağlayıcısı + muhasebe programı",
+                    "Entegrasyon: çok kanallı, kapsamlı entegrasyon yazılımı",
+                    "Reklam: düzenli reklam bütçesi, ikinci pazaryerine erken geçiş",
+                    "Uygun: bütçesi olan ve haftada 20+ saat ayırabilenler",
+                ],
+                "pick": "Sonraki adımlarda bu kombinasyona uygun seçenekleri öne çıkaracağım.",
+            },
+        ]
+    },
+    "a.sirket.1": {
+        "options": [
+            {
+                "key": "yerel",
+                "title": "Yerel mali müşavir",
+                "lines": [
+                    "Artı: yüz yüze görüşme, belgeleri elden teslim, kişisel takip",
+                    "Eksi: e-ticaret deneyimi olmayabilir; mutlaka sor",
+                ],
+                "pick": "Aşağıdaki hazır mesajı birkaç müşavire gönder ve teklifleri karşılaştır.",
+            },
+            {
+                "key": "online",
+                "title": "Online muhasebe / müşavirlik hizmeti",
+                "lines": [
+                    "Artı: şirket açılışı genelde online, e-ticaret müşterisi çok, fiyatlar şeffaf",
+                    "Eksi: daha az kişisel; paket dışı işler ek ücretli olabilir",
+                ],
+                "pick": "Aşağıdaki hazır mesajı birkaç firmaya gönder ve paket içeriklerini karşılaştır.",
+            },
+        ]
+    },
+    "a.sirket.2": {
+        "options": [
+            {
+                "key": "sahis",
+                "title": "Şahıs şirketi (önerilen)",
+                "lines": [
+                    "Kuruluşu hızlı ve ucuz; Trendyol başvurusu için yeterli",
+                    "29 yaş altıysan genç girişimci gelir vergisi istisnası sadece şahıs şirketinde var",
+                    "Eksi: borçlardan şahsen sorumlusun; ciro büyüyünce limitede geçiş konuşulur",
+                ],
+            },
+            {
+                "key": "limited",
+                "title": "Limited şirket",
+                "lines": [
+                    "Sorumluluk şirket sermayesiyle sınırlı, kurumsal görünüm",
+                    "Eksi: kuruluş ve muhasebe daha pahalı ve uzun; ilk ay için genelde gereksiz",
+                ],
+            },
+        ]
+    },
+    "a.sirket.3": {
+        "options": [
+            {
+                "key": "gib",
+                "title": "GİB e-Arşiv Portalı",
+                "lines": [
+                    "Ücretsiz; GİB'in sitesinden elle fatura kesersin",
+                    "Eksi: her siparişte elle işlem; günde birkaç siparişi geçince zorlaşır",
+                    "Uygun: ekonomik başlangıç kombinasyonu",
+                ],
+                "pick": "Satışlar artınca özel sağlayıcıya geçmeyi planla.",
+            },
+            {
+                "key": "ozel",
+                "title": "Özel e-arşiv sağlayıcısı",
+                "lines": [
+                    "Faturalar entegrasyon yazılımından veya pazaryerinden otomatik kesilir",
+                    "Örnek sağlayıcılar: Paraşüt, BirFatura, Logo, Uyumsoft, İzibiz",
+                    "Ücretlendirme: kontör veya abonelik; e-ticaret modülü ayrı ücretli olabilir",
+                    "Uygun: dengeli ve hızlı büyüme kombinasyonları",
+                ],
+                "pick": "Seçeceğin entegrasyon yazılımının bu sağlayıcıyla çalıştığını teyit et.",
+            },
+        ]
+    },
+    "a.sirket.4": {
+        "options": [
+            {
+                "key": "ptt",
+                "title": "PTT KEP",
+                "lines": [
+                    "En bilinen sağlayıcı; online ön başvuru, gerekirse şubede imza",
+                    "Yıllık abonelik ücreti var",
+                ],
+            },
+            {
+                "key": "ozel",
+                "title": "Özel KEP sağlayıcısı",
+                "lines": [
+                    "BTK yetkili özel şirketler; fiyatlar sağlayıcıya göre değişir",
+                    "Bazıları tamamen online başvuru sunar (e-imza ile)",
+                ],
+            },
+        ]
+    },
+    "a.tedarik.1": {
+        "options": [
+            {
+                "key": "pet1",
+                "title": "Pet tedarikçi adayları",
+                "when": "a.hazirlik.1=pet",
+                "lines": [
+                    "Bir 2025 sonu listesinde XML bayilik veren olarak geçenler: Petibom, Petzztedarik, Hızlımama",
+                    "Aktif olup olmadıklarını ve şartlarını sitelerinden kontrol et",
+                ],
+                "pick": "Şimdi bu adaylara bir sonraki adımdaki hazır mesajı gönder.",
+            },
+            {
+                "key": "ev1",
+                "title": "Ev ve yaşam tedarikçi adayları",
+                "when": "a.hazirlik.1=evduzen",
+                "lines": [
+                    "Listelerde ev/yaşam ürünleri için XML verdiği belirtilenler: Evidea (mobilya, ev tekstili, dekorasyon), Turuncix (ev ve yaşam dahil çok kategori)",
+                    "Aktif olup olmadıklarını ve şartlarını sitelerinden kontrol et",
+                ],
+                "pick": "Şimdi bu adaylara bir sonraki adımdaki hazır mesajı gönder.",
+            },
+            {
+                "key": "platform",
+                "title": "Çok kategorili XML platformları",
+                "lines": [
+                    "Birçok toptancının ürününü tek XML'de toplayan platformlar; ürün çeşidi geniş",
+                    "Google: 'xml bayilik' ve 'dropshipping xml tedarikçi' aramalarında üst sıralar",
+                    "Dikkat: aynı XML'i çok satıcı kullanır; fiyat rekabeti yüksek olur",
+                ],
+                "pick": "Platformlardan 2-3 tanesine kaydol ve kategorindeki ürün sayısına bak.",
+            },
+            {
+                "key": "uzman",
+                "title": "Kategori uzmanı toptancı",
+                "lines": [
+                    "Sadece senin kategorinde ürün satan toptancı veya ithalatçı",
+                    "Bulma yolu: Trendyol'da çok satıcının aynı görselle sattığı ürünün adını Google'da arat",
+                    "Artı: daha az rakip, daha iyi fiyat ve stok bilgisi",
+                ],
+                "pick": "Bulduğun 2-3 toptancıya bir sonraki adımdaki hazır mesajı gönder.",
+            },
+        ]
+    },
+    "a.entegrasyon.1": {
+        "options": [
+            {
+                "key": "xmlodak",
+                "title": "XML bayilik odaklı uygun fiyatlı araçlar",
+                "lines": [
+                    "Tedarikçi XML'ini Trendyol'a aktarmaya odaklı; aylık birkaç yüz TL'den başlayan paketler bulunuyor",
+                    "Uygun: ekonomik başlangıç kombinasyonu",
+                    "Sor: sipariş aktarımı ve fatura entegrasyonu pakete dahil mi?",
+                ],
+            },
+            {
+                "key": "entegra",
+                "title": "Entegra",
+                "lines": [
+                    "Karşılaştırmalarda XML desteği öne çıkıyor; çok kanallı",
+                    "Bir karşılaştırma sitesine göre yıllık başlangıç yaklaşık 35 bin TL; öğrenme eğrisi yüksek",
+                    "Uygun: hızlı büyüme kombinasyonu",
+                ],
+            },
+            {
+                "key": "stockmount",
+                "title": "StockMount",
+                "lines": [
+                    "XML + API ile otomatik stok ve fiyat senkronu sunduğu belirtiliyor",
+                    "Uygun: dengeli kombinasyon; güncel fiyatı firmadan iste",
+                ],
+            },
+            {
+                "key": "dopigo",
+                "title": "Dopigo",
+                "lines": [
+                    "14 gün ücretsiz deneme; sipariş, e-fatura, kargo ve stok senkronu",
+                    "Sitesinde XML'den bahsetmiyor; tedarikçi XML'ini destekleyip desteklemediğini sor",
+                ],
+            },
+        ],
+        "warn": (
+            "Sentos kendi sitesinde dropshipping modeline uygun olmadığını belirtiyor; XML dropshipping için seçme.",
+            "Fiyatlar kaynaklar arasında farklı; karar vermeden önce güncel, KDV dahil fiyat iste.",
+        ),
+    },
+}
+
+STAGES = enrich(_BASE, OPTIONS)

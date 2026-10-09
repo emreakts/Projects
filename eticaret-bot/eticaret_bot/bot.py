@@ -15,6 +15,7 @@ Callback verisi şeması:
   tg:<görev id>           görevin işaretini kaldır / koy
   guide:<dal>             sıradaki adım: ilk tamamlanmamış görev
   done:<görev id>         görevi tamamla ve sıradakine geç
+  ch:<görev id>:<seçenek> botun sunduğu seçeneklerden birini seç (görevi tamamlar)
   ps:<dal>                ürün analizini başlat
   pa:<kriter>:<puan>      ürün analizi cevabı
   fm:<dal>:<araç>         form aracını başlat (kâr hesabı, reklam testi...)
@@ -353,7 +354,26 @@ def _tool_shortcuts(branch: Branch, task: roadmap.Task) -> list[Btn]:
     return buttons
 
 
-def task_view(branch: Branch, task_id: str, done: set[str], header: str = "") -> tuple[str, InlineKeyboardMarkup]:
+def _choice_titles(choices: dict[str, str]) -> dict[str, str]:
+    """Görev id -> kullanıcının seçtiği seçeneğin adı (kişiselleştirme için)."""
+    titles = {}
+    for task_id, key in choices.items():
+        if task_id not in ALL_TASK_IDS:
+            continue
+        _, task = roadmap.find_task(branch_of_task(task_id).stages, task_id)
+        titles.update({task_id: o.title for o in task.options if o.key == key})
+    return titles
+
+
+def task_view(
+    branch: Branch, task_id: str, done: set[str], header: str = "", choices: dict[str, str] | None = None
+) -> tuple[str, InlineKeyboardMarkup]:
+    choices = choices or {}
+    titles = _choice_titles(choices)
+
+    def esc(text: str) -> str:
+        return html.escape(roadmap.personalize(text, titles), quote=False)
+
     stage, task = roadmap.find_task(branch.stages, task_id)
     position = stage.tasks.index(task) + 1
     ids = roadmap.task_ids(branch.stages)
@@ -361,26 +381,42 @@ def task_view(branch: Branch, task_id: str, done: set[str], header: str = "") ->
 
     lines = [
         f"{header}📍 {stage.title} · {position}/{len(stage.tasks)}\n",
-        f"{'✅' if is_done else '👉'} <b>{html.escape(task.text, quote=False)}</b>\n",
+        f"{'✅' if is_done else '👉'} <b>{esc(task.text)}</b>\n",
     ]
     if task.why:
         lines[-1] = lines[-1].rstrip("\n")
-        lines.append(f"<i>{html.escape(task.why, quote=False)}</i>\n")
+        lines.append(f"<i>{esc(task.why)}</i>\n")
+    options = roadmap.visible_options(task, choices)
+    chosen = choices.get(task.id)
+    if options:
+        lines.append("🔎 <b>Senin için araştırdığım seçenekler:</b>")
+        for n, o in enumerate(options, 1):
+            mark = " ✔️ <i>(seçimin)</i>" if o.key == chosen else ""
+            lines.append(f"\n<b>{n}. {esc(o.title)}</b>{mark}")
+            lines += [f"• {esc(line)}" for line in o.lines]
+        lines.append("")
     if task.how:
-        lines += [f"{i}. {html.escape(step, quote=False)}" for i, step in enumerate(task.how, 1)]
-    else:
-        lines.append(f"💡 {html.escape(stage.guide, quote=False)}")
+        if options:
+            lines.append("📋 <b>Nasıl ilerlersin:</b>")
+        lines += [f"{i}. {esc(step)}" for i, step in enumerate(task.how, 1)]
+    elif not options:
+        lines.append(f"💡 {esc(stage.guide)}")
     if task.template:
         lines.append("\n✉️ <b>Hazır mesaj</b> (dokunup kopyala):")
-        lines.append(f"<pre>{html.escape(task.template, quote=False)}</pre>")
+        lines.append(f"<pre>{esc(task.template)}</pre>")
     if task.warn:
         lines.append("")
-        lines += [f"⚠️ {html.escape(w, quote=False)}" for w in task.warn]
-    if task.done:
-        lines.append(f"\n✔️ <b>Bitti sayılır:</b> {html.escape(task.done, quote=False)}")
+        lines += [f"⚠️ {esc(w)}" for w in task.warn]
+    if task.done and not options:
+        lines.append(f"\n✔️ <b>Bitti sayılır:</b> {esc(task.done)}")
     lines.append(f"\n{roadmap.progress_bar(sum(t in done for t in ids), len(ids))}")
 
-    if is_done:
+    if options:
+        rows = [
+            [Btn(("✔️ " if o.key == chosen else "👉 ") + o.title, callback_data=f"ch:{task.id}:{o.key}")]
+            for o in options
+        ]
+    elif is_done:
         rows = [[Btn("↩️ Tamamlanmadı olarak işaretle", callback_data=f"tg:{task.id}")]]
     else:
         rows = [[Btn("✅ Yaptım, sıradaki", callback_data=f"done:{task.id}")]]
@@ -400,8 +436,9 @@ def task_view(branch: Branch, task_id: str, done: set[str], header: str = "") ->
 
 
 async def _render_task(update: Update, context: ContextTypes.DEFAULT_TYPE, task_id: str, header: str = "") -> None:
-    done = _storage(context).done_tasks(update.effective_user.id)
-    text, markup = task_view(branch_of_task(task_id), task_id, done, header)
+    storage = _storage(context)
+    uid = update.effective_user.id
+    text, markup = task_view(branch_of_task(task_id), task_id, storage.done_tasks(uid), header, storage.choices(uid))
     await _reply(update, text, markup)
 
 
@@ -444,6 +481,27 @@ async def complete_and_next(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     if task_id not in storage.done_tasks(update.effective_user.id):
         storage.toggle_task(update.effective_user.id, task_id)
     await _render_guide(update, context, branch_of_task(task_id))
+
+
+async def choose_option(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    task_id, key = _arg(update, 1), _arg(update, 2)
+    if task_id not in ALL_TASK_IDS:
+        await update.callback_query.answer("Bu adım artık yok.")
+        return
+    branch = branch_of_task(task_id)
+    _, task = roadmap.find_task(branch.stages, task_id)
+    option = next((o for o in task.options if o.key == key), None)
+    if option is None:
+        await update.callback_query.answer("Bu seçenek artık yok.")
+        return
+    storage = _storage(context)
+    uid = update.effective_user.id
+    storage.set_choice(uid, task_id, key)
+    storage.mark_done(uid, task_id)
+    header = f"✔️ Seçimin kaydedildi: <b>{html.escape(option.title, quote=False)}</b>\n"
+    if option.pick:
+        header += f"{html.escape(option.pick, quote=False)}\n"
+    await _render_guide(update, context, branch, header + "\n")
 
 
 # ---------- Ürün analizi ----------
@@ -660,6 +718,7 @@ def build_application(token: str, db_path: str) -> Application:
     app.add_handler(CallbackQueryHandler(toggle_task, pattern=r"^tg:[\w.]+$"))
     app.add_handler(CallbackQueryHandler(show_guide, pattern=r"^guide:\w+$"))
     app.add_handler(CallbackQueryHandler(complete_and_next, pattern=r"^done:[\w.]+$"))
+    app.add_handler(CallbackQueryHandler(choose_option, pattern=r"^ch:[\w.]+:\w+$"))
     app.add_handler(CallbackQueryHandler(stale_button))
     return app
 

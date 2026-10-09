@@ -5,11 +5,11 @@ Yasal ve vergisel adımlar genel bilgilendirmedir; kesin karar için mali müşa
 
 from __future__ import annotations
 
-from ..core.roadmap import make_stage
+from ..core.roadmap import enrich, make_stage
 
 BRANCH_ID = "c"
 
-STAGES = (
+_BASE = (
     make_stage(
         BRANCH_ID,
         "pazar",
@@ -473,3 +473,379 @@ STAGES = (
         ],
     ),
 )
+
+
+# ---------- Ders alanları ve botun araştırıp sunduğu seçenekler ----------
+# Kaynak: 2026 tarihli eyalet ücret karşılaştırmaları, tedarikçi platform karşılaştırmaları ve niş
+# raporları. Ücretler kaynaklar arasında farklı olabildiği için yaklaşık verildi.
+
+EXTRA = {
+    "c.pazar.1": {
+        "text": "Hedef pazarını seç",
+        "why": "Gümrük, kargo, ödeme ve reklam maliyetin bu karara göre değişir.",
+        "options": [
+            {
+                "key": "us",
+                "title": "🇺🇸 ABD",
+                "lines": [
+                    "En büyük pazar, en fazla müşteri ve ürün verisi",
+                    "800 $ gümrük muafiyeti kalktı: Çin'den gelen her paket gümrüklü; DDP veya ABD deposu şart",
+                    "Reklam maliyeti en yüksek pazar",
+                ],
+            },
+            {
+                "key": "uk",
+                "title": "🇬🇧 İngiltere",
+                "lines": [
+                    "İngilizce, ABD'ye göre daha ucuz reklam",
+                    "135 £ altı gönderilerde %20 KDV'yi satıcı tahsil eder; UK KDV kaydı gerekir",
+                ],
+            },
+            {
+                "key": "eu",
+                "title": "🇪🇺 Avrupa Birliği",
+                "lines": [
+                    "Büyük pazar ama çok dilli; ülke ülke reklam ve çeviri gerekir",
+                    "1 Temmuz 2026'dan beri 150 € altı gönderilerde ürün başına 3 € gümrük; KDV için IOSS kaydı",
+                ],
+            },
+            {
+                "key": "cau",
+                "title": "🇨🇦🇦🇺 Kanada / Avustralya",
+                "lines": [
+                    "İngilizce, rekabet ABD'den az, sepet ortalaması iyi",
+                    "Pazar daha küçük; kargo süreleri ve ülkenin vergi kuralları kontrol edilmeli",
+                ],
+            },
+        ],
+        "how": ["Tek pazarla başla; sistem oturunca aynı dili konuşan ikinci pazarı ekle."],
+    },
+    "c.pazar.2": {
+        "text": "Mağaza tipini seç",
+        "why": "Mağaza tipi; güveni, dönüşüm oranını ve yeni ürün test etme hızını belirler.",
+        "options": [
+            {
+                "key": "nis",
+                "title": "Niş mağaza (önerilen)",
+                "lines": [
+                    "Tek bir ilgi alanı (ör. evcil hayvan, mutfak): aynı kitleye birden çok ürün",
+                    "Upsell kolay, marka hissi var; ürün testleri aynı mağazada yapılır",
+                ],
+            },
+            {
+                "key": "tek",
+                "title": "Tek ürün mağazası",
+                "lines": [
+                    "Dönüşüm en yüksek; sayfa tamamen tek ürüne odaklı",
+                    "Her yeni ürün testi yeni bir mağaza demek",
+                ],
+            },
+            {
+                "key": "genel",
+                "title": "Genel mağaza",
+                "lines": [
+                    "Her şey satılır, test çok hızlı",
+                    "Güven ve dönüşüm düşük; marka oluşmaz",
+                ],
+            },
+        ],
+    },
+    "c.pazar.3": {
+        "why": "Test edilen ürünlerin çoğu tutmaz; bütçen 3-5 testi kaldırmalı.",
+        "done": "Toplam test bütçen ve aylık sabit giderin yazılı.",
+    },
+    "c.pazar.4": {
+        "why": "Türkiye'de yerleşik olarak yurt dışı şirketten kazanç elde etmenin vergi sonuçları var.",
+        "done": "Müşavirinden yazılı bir yol haritası aldın.",
+    },
+    "c.sirket.1": {
+        "text": "Şirketini nerede kuracağını seç",
+        "why": "Stripe/PayPal Türkiye'de yok; ödeme alabilmek için yurt dışı şirket gerekir.",
+        "options": [
+            {
+                "key": "nm",
+                "title": "New Mexico LLC (en ucuz)",
+                "lines": [
+                    "Kuruluş yaklaşık 50 $; yıllık eyalet ücreti ve yıllık rapor yok",
+                    "Eksi: eyalet hukuku Wyoming kadar yerleşik değil",
+                ],
+            },
+            {
+                "key": "wy",
+                "title": "Wyoming LLC (en yaygın)",
+                "lines": [
+                    "Kuruluş yaklaşık 100 $ + yıllık yaklaşık 60 $",
+                    "Yabancılar için en çok tercih edilen; eyalet gelir vergisi yok",
+                ],
+            },
+            {
+                "key": "de",
+                "title": "Delaware LLC",
+                "lines": [
+                    "Kuruluş yaklaşık 110 $ + yıllık 300-400 $ (kaynaklar çelişiyor)",
+                    "Yatırımcı almayacaksan genelde gereksiz pahalı",
+                ],
+            },
+            {
+                "key": "uk",
+                "title": "İngiltere Ltd",
+                "lines": [
+                    "Kuruluşu hızlı; Stripe UK kullanılabilir",
+                    "İngiltere kurumlar vergisi ve yıllık hesap yükümlülüğü getirir",
+                ],
+            },
+        ],
+        "how": [
+            "ABD seçeneklerinde her yıl ayrıca kayıtlı temsilci (registered agent) ücreti var (yaklaşık 100-200 $).",
+            "Seçimini mali müşavirinle netleştir.",
+        ],
+    },
+    "c.sirket.2": {
+        "text": "Şirketini kur",
+        "options": [
+            {
+                "key": "servis",
+                "title": "Şirket kurma servisiyle",
+                "lines": [
+                    "Stripe Atlas, doola, Firstbase gibi servisler kuruluş + kayıtlı temsilci + EIN'i paketler",
+                    "Artı: kolay ve hızlı; Eksi: paket ücreti eyalet ücretinin üstüne eklenir",
+                ],
+            },
+            {
+                "key": "kendin",
+                "title": "Kendin kur",
+                "lines": [
+                    "Eyaletin resmi sitesinden kuruluş belgesini doldurur, kayıtlı temsilciyi ayrı tutarsın",
+                    "Artı: daha ucuz; Eksi: İngilizce form ve yazışma gerekir, EIN'i ayrıca alırsın",
+                ],
+            },
+        ],
+    },
+    "c.sirket.3": {
+        "why": "EIN, şirketin ABD vergi numarasıdır; banka ve ödeme sağlayıcıları ister.",
+        "done": "EIN onay mektubun (CP 575) elinde.",
+    },
+    "c.sirket.4": {
+        "text": "Şirket adına ABD banka hesabı aç",
+        "options": [
+            {
+                "key": "mercury",
+                "title": "Mercury",
+                "lines": [
+                    "Online ABD bankacılık; LLC'ler arasında yaygın",
+                    "Yabancı sahipli şirket kabul politikasını başvurmadan kontrol et",
+                ],
+            },
+            {
+                "key": "relay",
+                "title": "Relay",
+                "lines": [
+                    "Online işletme hesabı; birden fazla alt hesap ile bütçe ayırma kolay",
+                    "Yabancı sahipli şirket kabul politikasını başvurmadan kontrol et",
+                ],
+            },
+            {
+                "key": "wise",
+                "title": "Wise Business",
+                "lines": [
+                    "Çok dövizli hesap; Türkiye'ye para transferi kolay",
+                    "Bazı ödeme sağlayıcıları ABD banka hesabı şartı arayabilir; kontrol et",
+                ],
+            },
+        ],
+        "warn": "Bankalar kabul politikalarını değiştirebiliyor; reddedilirsen diğer seçeneği dene.",
+    },
+    "c.sirket.5": {
+        "text": "Ödeme sağlayıcını seç ve başvur",
+        "options": [
+            {
+                "key": "shopify",
+                "title": "Shopify Payments",
+                "lines": [
+                    "En sorunsuz entegrasyon, ek işlem ücreti yok",
+                    "2026'da ABD'de fiziksel/operasyonel varlığı olmayan yabancıları sık reddediyor",
+                ],
+            },
+            {
+                "key": "stripe",
+                "title": "Stripe (LLC + EIN ile)",
+                "lines": [
+                    "SSN olmadan LLC + EIN + ABD banka hesabıyla açılabiliyor",
+                    "Shopify'da üçüncü taraf ödeme kullanınca plana göre ek işlem ücreti kesilir",
+                ],
+            },
+            {
+                "key": "paypal",
+                "title": "PayPal Business (ek olarak)",
+                "lines": [
+                    "Birçok müşteri PayPal ile ödemeyi tercih eder; dönüşümü artırır",
+                    "Ana ödeme yöntemi değil, yanına ek olarak kullan",
+                ],
+            },
+        ],
+        "how": ["Başvurudan önce mağazanı bitir: politikalar, iletişim ve ürünler hazır olsun."],
+    },
+    "c.sirket.6": {
+        "why": "Para trafiği belgeli olmazsa vergi ve banka tarafında sorun yaşarsın.",
+        "done": "Transfer akışın ve belge arşivleme düzenin belli.",
+    },
+    "c.sirket.7": {
+        "why": "Eşikleri geçince satış vergisi tahsil etmezsen sonradan ceza ve geriye dönük vergi çıkar.",
+        "done": "Hangi pazarda hangi vergi kaydının gerektiğini biliyorsun.",
+    },
+    "c.urun.1": {
+        "text": "Nişini seç",
+        "why": "Niş; ürün araştırmanı, reklam kitleni ve mağaza tasarımını belirler.",
+        "options": [
+            {
+                "key": "pet",
+                "title": "Evcil hayvan",
+                "lines": [
+                    "2026 raporlarında en tutarlı önerilen niş; tekrar eden alım",
+                    "Kişiselleştirilmiş aksesuar ve akıllı pet ürünleri marjı yükseltir",
+                ],
+            },
+            {
+                "key": "ev",
+                "title": "Ev düzeni ve dekor",
+                "lines": [
+                    "Düzenleyici, mum, duvar dekoru gibi hafif ürünler; kısa videoda iyi görünür",
+                    "Büyük mobilyadan kaçın: kargo ve iade pahalı",
+                ],
+            },
+            {
+                "key": "saglik",
+                "title": "Sağlık ve wellness aksesuarı",
+                "lines": [
+                    "Masaj/toparlanma aletleri, uyku ürünleri, fitness aksesuarları büyüyor",
+                    "Dikkat: sağlık iddiaları reklam platformlarında ve yasal olarak denetlenir",
+                ],
+            },
+            {
+                "key": "outdoor",
+                "title": "Outdoor ve seyahat",
+                "lines": [
+                    "Valiz düzenleyici, kamp ekipmanı, seyahat aksesuarı",
+                    "Sezonluk dalgalanma olabilir; yaz öncesi güçlü",
+                ],
+            },
+            {
+                "key": "eko",
+                "title": "Çevre dostu ürünler",
+                "lines": [
+                    "Yeniden kullanılabilir ev ürünleri, bambu ürünler",
+                    "Bilinçli tüketici daha yüksek fiyat ödemeye hazır",
+                ],
+            },
+        ],
+        "how": [
+            "Seçtiğin nişte Meta Ad Library'de (facebook.com/ads/library) hedef ülkeni seçip ara; aynı ürün için çok sayıda aktif reklam varsa o ürün para kazandırıyor demektir.",
+            "TikTok Creative Center'da Top Ads ve trend ürünlere bak.",
+        ],
+        "warn": "Niş listeleri yön gösterir; satın almadan önce Google Trends ve aktif reklamlarla talebi kendi pazarında doğrula.",
+    },
+    "c.urun.2": {
+        "text": "{secim:c.urun.1|Nişinde} 20 aday ürün listesi çıkar",
+        "done": "20 adaylık listen hazır.",
+    },
+    "c.urun.3": {"done": "Her adayın skoru yazılı; 70 altı elendi."},
+    "c.urun.4": {
+        "why": "Reklamla satışta başa baş CPA'sı düşük ürün zarar ettirir.",
+        "done": "En iyi 3-5 ürünün başa baş CPA'sı ve fiyat çarpanı belli.",
+    },
+    "c.urun.5": {"done": "Rakiplerden 3 güçlü ve 3 zayıf yön not ettin."},
+    "c.tedarik.1": {
+        "text": "Tedarikçi platformunu seç",
+        "why": "Kargo süresi ve ürün kalitesi iade, şikayet ve chargeback oranını doğrudan belirler.",
+        "options": [
+            {
+                "key": "cj",
+                "title": "CJ Dropshipping",
+                "lines": [
+                    "Aylık ücret yok; ürün, kargo ve isteğe bağlı hizmetler için ödersin",
+                    "ABD depoları var; Çin hattında 7-15 gün sürebilir, ABD deposundaki ürünleri seç",
+                    "Uygun: en düşük maliyetle başlamak isteyenler",
+                ],
+            },
+            {
+                "key": "spocket",
+                "title": "Spocket",
+                "lines": [
+                    "ABD/AB tedarikçileri; yurt içi teslim yaklaşık 2-6 gün (en hızlı)",
+                    "Aylık yaklaşık 40-60 $; katalog daha dar",
+                    "Uygun: hızlı kargoyla güven kazanmak isteyenler",
+                ],
+            },
+            {
+                "key": "zendrop",
+                "title": "Zendrop",
+                "lines": [
+                    "Ücretsiz plan (sipariş başı ücretli) veya aylık yaklaşık 49-79 $",
+                    "ABD stoklu ürünlerde 5-8 gün; her ürün ABD'de stoklu değil",
+                ],
+            },
+            {
+                "key": "dsers",
+                "title": "DSers (AliExpress)",
+                "lines": [
+                    "Ücretsiz planda 3.000 ürüne kadar; AliExpress siparişlerini otomatikleştirir",
+                    "Kendi deposu yok; kargo süresi AliExpress satıcısına bağlı, daha yavaş",
+                ],
+            },
+        ],
+        "how": [
+            "Seçtiğin platformda en iyi 3 ürünün için ürün + hedef ülkeye kargo fiyatı ve teslim süresini not et.",
+            "Ürünü en az 2 kaynaktan karşılaştır.",
+        ],
+        "warn": "Fiyatlar ve süreler kaynaklara göre değişiyor; platformun kendi sitesinden güncelini kontrol et.",
+    },
+    "c.tedarik.2": {
+        "why": "DDP değilse müşteri kapıda vergi öder; iade ve chargeback patlar.",
+        "done": "DDP olduğunu ya da gümrük oranını yazılı olarak aldın.",
+    },
+    "c.tedarik.3": {"done": "Test siparişi geldi; kalite ve süre kabul edilebilir."},
+    "c.tedarik.4": {"done": "Test paketinde fiyat, fatura veya logo yoktu."},
+    "c.tedarik.5": {"done": "Ölçekleme için ajan veya depo seçeneğin belli."},
+    "c.magaza.1": {"done": "Shopify hesabın açık."},
+    "c.magaza.2": {"done": "Alan adın bağlı ve destek e-postan çalışıyor."},
+    "c.magaza.3": {"done": "Tema, logo ve renkler hazır; mobilde kontrol ettin."},
+    "c.magaza.4": {
+        "why": "Ödeme sağlayıcıları ve reklam platformları bu sayfalar olmadan hesabı onaylamaz.",
+        "done": "6 sayfa da yayında ve alt menüde linkli.",
+    },
+    "c.magaza.5": {"done": "Ana ürün sayfan video, fayda maddeleri ve SSS ile hazır."},
+    "c.magaza.6": {
+        "text": "{secim:c.tedarik.1|Tedarikçi} uygulamasını bağla ve ürünü içe aktar",
+        "done": "Ürün mağazada, varyantlar tedarikçiyle eşleşik.",
+    },
+    "c.magaza.7": {"done": "Fiyat ve paket teklifi Kâr Hesabı'na göre ayarlı."},
+    "c.magaza.8": {"done": "Test siparişi uçtan uca sorunsuz geçti."},
+    "c.reklam.1": {
+        "why": "Pixel ve Conversions API olmadan Meta kimin satın aldığını öğrenemez; reklam optimize olmaz.",
+        "done": "Events Manager'da Purchase olayı görünüyor.",
+    },
+    "c.reklam.2": {"done": "TikTok Pixel bağlı (veya bu adımı bilinçli olarak atladın)."},
+    "c.reklam.3": {
+        "why": "Reklamda kazanan çoğu zaman üründen çok ilk 3 saniyedir.",
+        "done": "3-5 farklı hook ile başlayan videon hazır.",
+    },
+    "c.reklam.4": {"done": "Başa baş CPA ve ROAS değerlerin not edildi."},
+    "c.reklam.5": {"done": "Test kampanyan yayında."},
+    "c.reklam.6": {"done": "Bir hafta boyunca her gün karar verdin."},
+    "c.operasyon.1": {"done": "Siparişler tedarikçiye otomatik gidiyor."},
+    "c.operasyon.2": {"done": "Takip numaraları otomatik geçiyor, takip sayfası yayında."},
+    "c.operasyon.3": {"done": "En az 4 hazır cevap şablonun var."},
+    "c.operasyon.4": {"done": "Hasar/kayıp durumunda ne yapılacağı tedarikçiyle yazılı."},
+    "c.operasyon.5": {
+        "why": "Yüksek chargeback oranı ödeme hesabının kapanmasına yol açabilir.",
+        "done": "Dispute kontrolü haftalık rutininde.",
+    },
+    "c.olcek.1": {"done": "Bütçe kademeli arttı, CPA başa başın altında kaldı."},
+    "c.olcek.2": {"done": "En az bir yeni kreatif, ülke veya kanal test edildi."},
+    "c.olcek.3": {"done": "Paket veya upsell teklifi yayında."},
+    "c.olcek.4": {"done": "Sepet terk ve satın alma sonrası akışları çalışıyor."},
+    "c.olcek.5": {"done": "Kazanan ürün hedef ülke deposundan gönderiliyor."},
+    "c.olcek.6": {"done": "Markalı ambalaj veya private label için tedarikçiyle anlaştın."},
+}
+
+STAGES = enrich(_BASE, EXTRA)

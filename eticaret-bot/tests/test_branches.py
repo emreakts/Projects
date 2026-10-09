@@ -83,7 +83,9 @@ def test_task_view_shortcuts_and_navigation():
     ids = roadmap.task_ids(b.stages)
     first_text, first = task_view(b, ids[0], set())
     data = [btn.callback_data for row in first.inline_keyboard for btn in row]
-    assert f"done:{ids[0]}" in data and f"tk:{ids[1]}" in data
+    assert f"ch:{ids[0]}:us" in data and f"tk:{ids[1]}" in data  # ilk adım bir seçim
+    _, plain = task_view(b, "c.pazar.3", set())
+    assert "done:c.pazar.3" in [btn.callback_data for row in plain.inline_keyboard for btn in row]
     assert not any(d.startswith("tk:") and d != f"tk:{ids[1]}" for d in data)  # ilk adımda "önceki" yok
     _, kar_task = roadmap.find_task(b.stages, "c.urun.4")
     _, markup = task_view(b, kar_task.id, {kar_task.id})
@@ -143,5 +145,60 @@ def test_task_views_with_quiz_header_fit(branch):
 def test_branch_a_tasks_are_full_lessons():
     b = BRANCHES["a"]
     tasks = [t for s in b.stages for t in s.tasks]
-    assert all(t.how and t.done for t in tasks)
+    assert all(t.how for t in tasks)
+    assert all(t.done for t in tasks if not t.options)  # seçenekli adımda seçim = bitti
     assert any(t.template for t in tasks)
+    assert sum(bool(t.options) for t in tasks) >= 6
+
+
+def _all_choice_combos(branch):
+    """Her seçenekli görev için her seçeneği tek tek seçili kabul eden senaryolar."""
+    yield {}
+    for s in branch.stages:
+        for t in s.tasks:
+            for o in t.options:
+                yield {t.id: o.key}
+
+
+@pytest.mark.parametrize("branch", READY, ids=lambda b: b.id)
+def test_option_views_fit_and_buttons_valid(branch):
+    from eticaret_bot.bot import quiz_result, task_view
+
+    _, header = quiz_result("000000" if branch.id == "a" else "222222")
+    for choices in _all_choice_combos(branch):
+        for tid in roadmap.task_ids(branch.stages):
+            text, markup = task_view(branch, tid, set(), header, choices)
+            assert len(text) < 4096, (tid, choices)
+            assert "{secim:" not in text
+            for row in markup.inline_keyboard:
+                for btn in row:
+                    assert len(btn.callback_data.encode()) <= 64
+                    assert len(btn.text) <= 64
+
+
+def test_conditional_options_and_personalization():
+    from eticaret_bot.bot import task_view
+
+    b = BRANCHES["a"]
+    text, markup = task_view(b, "a.tedarik.1", set(), choices={})
+    assert "Petibom" not in text and "Kategorin için" in text
+    text, markup = task_view(b, "a.tedarik.1", set(), choices={"a.hazirlik.1": "pet"})
+    assert "Petibom" in text and "Evcil hayvan ürünleri için" in text
+    data = [btn.callback_data for row in markup.inline_keyboard for btn in row]
+    assert "ch:a.tedarik.1:pet1" in data and "done:a.tedarik.1" not in data
+
+
+def test_option_keys_unique_and_when_refs_valid():
+    from eticaret_bot.branches import ALL_TASK_IDS
+
+    for b in READY:
+        for s in b.stages:
+            for t in s.tasks:
+                keys = [o.key for o in t.options]
+                assert len(keys) == len(set(keys)), t.id
+                for o in t.options:
+                    if o.when:
+                        dep, key = o.when.split("=")
+                        assert dep in ALL_TASK_IDS
+                        _, dep_task = roadmap.find_task(b.stages, dep)
+                        assert key in {x.key for x in dep_task.options}, (t.id, o.when)

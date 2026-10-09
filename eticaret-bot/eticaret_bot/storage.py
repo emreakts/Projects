@@ -18,6 +18,11 @@ class Storage:
         self._conn.execute(
             "CREATE TABLE IF NOT EXISTS profile (user_id INTEGER PRIMARY KEY, branch TEXT NOT NULL)"
         )
+        self._conn.execute(
+            "CREATE TABLE IF NOT EXISTS choice ("
+            " user_id INTEGER NOT NULL, task_id TEXT NOT NULL, option_key TEXT NOT NULL,"
+            " PRIMARY KEY (user_id, task_id))"
+        )
         self._conn.commit()
 
     def done_tasks(self, user_id: int) -> set[str]:
@@ -54,8 +59,21 @@ class Storage:
         )
         self._conn.commit()
 
+    def choices(self, user_id: int) -> dict[str, str]:
+        rows = self._conn.execute("SELECT task_id, option_key FROM choice WHERE user_id = ?", (user_id,))
+        return {task_id: key for task_id, key in rows}
+
+    def set_choice(self, user_id: int, task_id: str, option_key: str) -> None:
+        self._conn.execute(
+            "INSERT INTO choice (user_id, task_id, option_key) VALUES (?, ?, ?) "
+            "ON CONFLICT(user_id, task_id) DO UPDATE SET option_key = excluded.option_key",
+            (user_id, task_id, option_key),
+        )
+        self._conn.commit()
+
     def reset(self, user_id: int) -> None:
-        """İlerlemeyi ve seçili modeli siler (kullanıcı baştan başlar)."""
+        """İlerlemeyi, seçimleri ve seçili modeli siler (kullanıcı baştan başlar)."""
         self._conn.execute("DELETE FROM progress WHERE user_id = ?", (user_id,))
         self._conn.execute("DELETE FROM profile WHERE user_id = ?", (user_id,))
+        self._conn.execute("DELETE FROM choice WHERE user_id = ?", (user_id,))
         self._conn.commit()
