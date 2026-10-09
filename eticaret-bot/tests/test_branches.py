@@ -202,3 +202,16 @@ def test_option_keys_unique_and_when_refs_valid():
                         assert dep in ALL_TASK_IDS
                         _, dep_task = roadmap.find_task(b.stages, dep)
                         assert key in {x.key for x in dep_task.options}, (t.id, o.when)
+
+
+def test_option_task_with_follow_up_action_offers_done_button():
+    from eticaret_bot.bot import task_view
+
+    b = BRANCHES["a"]
+    text, markup = task_view(b, "a.sirket.1", set(), choices={"a.sirket.1": "online"})
+    data = [btn.callback_data for row in markup.inline_keyboard for btn in row]
+    assert "<pre>" in text and "Bitti sayılır" in text
+    assert "done:a.sirket.1" in data and "ch:a.sirket.1:yerel" in data
+    # Saf karar adımında (hazırlık.1) "Yaptım" butonu olmaz; seçim adımı bitirir
+    _, markup = task_view(b, "a.hazirlik.1", set(), choices={"a.hazirlik.1": "pet"})
+    assert not any(btn.callback_data.startswith("done:") for row in markup.inline_keyboard for btn in row)

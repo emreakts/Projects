@@ -602,6 +602,7 @@ EXTRA = {
     },
     "c.sirket.2": {
         "text": "Şirketini kur",
+        "done": "Şirketin kuruldu ve kuruluş belgelerin elinde.",
         "options": [
             {
                 "key": "servis",
@@ -627,6 +628,7 @@ EXTRA = {
     },
     "c.sirket.4": {
         "text": "Şirket adına ABD banka hesabı aç",
+        "done": "Şirket adına banka hesabın açıldı.",
         "options": [
             {
                 "key": "mercury",
@@ -657,6 +659,7 @@ EXTRA = {
     },
     "c.sirket.5": {
         "text": "Ödeme sağlayıcını seç ve başvur",
+        "done": "En az bir ödeme sağlayıcın onaylandı.",
         "options": [
             {
                 "key": "shopify",
@@ -695,6 +698,7 @@ EXTRA = {
     },
     "c.urun.1": {
         "text": "Nişini seç",
+        "done": "Nişini seçtin ve o nişteki aktif reklamları taradın.",
         "why": "Niş; ürün araştırmanı, reklam kitleni ve mağaza tasarımını belirler.",
         "options": [
             {
@@ -756,6 +760,7 @@ EXTRA = {
     "c.urun.5": {"done": "Rakiplerden 3 güçlü ve 3 zayıf yön not ettin."},
     "c.tedarik.1": {
         "text": "Tedarikçi platformunu seç",
+        "done": "En iyi 3 ürünün fiyat ve teslim süreleri not edildi.",
         "why": "Kargo süresi ve ürün kalitesi iade, şikayet ve chargeback oranını doğrudan belirler.",
         "options": [
             {

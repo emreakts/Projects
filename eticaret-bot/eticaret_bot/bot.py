@@ -407,7 +407,7 @@ def task_view(
     if task.warn:
         lines.append("")
         lines += [f"⚠️ {esc(w)}" for w in task.warn]
-    if task.done and not options:
+    if task.done and (not options or chosen):
         lines.append(f"\n✔️ <b>Bitti sayılır:</b> {esc(task.done)}")
     lines.append(f"\n{roadmap.progress_bar(sum(t in done for t in ids), len(ids))}")
 
@@ -416,6 +416,8 @@ def task_view(
             [Btn(("✔️ " if o.key == chosen else "👉 ") + o.title, callback_data=f"ch:{task.id}:{o.key}")]
             for o in options
         ]
+        if chosen and roadmap.needs_action(task) and not is_done:
+            rows.append([Btn("✅ Yaptım, sıradaki", callback_data=f"done:{task.id}")])
     elif is_done:
         rows = [[Btn("↩️ Tamamlanmadı olarak işaretle", callback_data=f"tg:{task.id}")]]
     else:
@@ -497,10 +499,14 @@ async def choose_option(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     storage = _storage(context)
     uid = update.effective_user.id
     storage.set_choice(uid, task_id, key)
-    storage.mark_done(uid, task_id)
     header = f"✔️ Seçimin kaydedildi: <b>{html.escape(option.title, quote=False)}</b>\n"
     if option.pick:
         header += f"{html.escape(option.pick, quote=False)}\n"
+    if roadmap.needs_action(task):
+        # Seçimden sonra yapılacak iş var: aynı adımda kal, "Yaptım" ile tamamlansın.
+        await _render_task(update, context, task_id, header + "\n")
+        return
+    storage.mark_done(uid, task_id)
     await _render_guide(update, context, branch, header + "\n")
 
 

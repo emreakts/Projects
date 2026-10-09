@@ -99,6 +99,12 @@ def enrich(stages: Sequence[Stage], extra: Mapping[str, dict]) -> tuple[Stage, .
     return tuple(out)
 
 
+def needs_action(task: Task) -> bool:
+    """Seçimden sonra kullanıcının yapacağı bir iş var mı (hazır mesaj veya bitiş ölçütü)?
+    Yoksa seçim yapmak adımı tamamlar."""
+    return bool(task.template or task.done)
+
+
 def visible_options(task: Task, choices: Mapping[str, str]) -> tuple[Option, ...]:
     """Koşulu olmayan seçenekler ile koşulu kullanıcının seçimine uyanlar."""
     result = []

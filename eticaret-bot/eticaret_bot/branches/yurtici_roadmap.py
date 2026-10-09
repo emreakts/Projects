@@ -64,7 +64,7 @@ _BASE = (
                 "done": "Bir müşavirle anlaştın ve açılış için belge listesini aldın.",
             },
             {
-                "text": "Şahıs şirketini aç ve vergi levhanı al",
+                "text": "Şirket türünü seç, şirketini aç ve vergi levhanı al",
                 "why": "Vergi levhası olmadan Trendyol başvurusu yapılamaz ve fatura kesilemez.",
                 "how": [
                     "İşe başlama bildirimi e-Devlet şifrenle Dijital Vergi Dairesi (dijital.gib.gov.tr) üzerinden yapılır; genelde bunu müşavirin yapar.",
