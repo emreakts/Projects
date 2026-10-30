@@ -42,7 +42,7 @@ async function mockImages(items) {
 }
 
 (async () => {
-  const [dizi, n] = process.argv.slice(2), mock = process.argv.includes('--mock'), force = process.argv.includes('--force');
+  const [dizi, n] = process.argv.slice(2), mock = process.argv.includes('--mock') || process.argv.includes('--mock-gorsel'), force = process.argv.includes('--force');
   const only = process.argv.includes('--sahne') ? +process.argv[process.argv.indexOf('--sahne') + 1] - 1 : null;
   if (!dizi || !n) { console.error('kullanım: node dizi/gorsel.js <dizi> <bölüm> [--mock] [--force] [--sahne N]'); process.exit(1); }
   const b = bible(dizi), ep = episode(dizi, n), dir = outDir(episodeId(dizi, n));
