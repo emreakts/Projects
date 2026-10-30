@@ -1,7 +1,7 @@
 // Metni sese çevirir, kelime zamanlarını çıkarır, uzun boşlukları kısaltır.
 // Kullanım: node voice/tts.js <storyId> [--mock]
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
-const { loadEnv, story, outDir } = require('../lib');
+const { loadEnv, story, outDir, edgeSpeak } = require('../lib');
 loadEnv();
 const MAX_GAP = 0.5, KEEP_GAP = 0.3;
 
@@ -71,6 +71,8 @@ function tightenGaps(words, rawAudio, outWav, totalDur) {
     words = mockWords(s.metin);
     const dur = words[words.length - 1].end + 0.6;
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'anoisesrc=d=' + dur + ':c=brown:a=0.02', '-f', 'wav', raw]);
+  } else if ((process.env.SES_SAGLAYICI || 'edge') === 'edge') {
+    const wsw = edgeSpeak(s.metin, { ses: process.env.EDGE_VOICE || 'tr-TR-AhmetNeural', hiz: process.env.EDGE_RATE || '+0%', ton: process.env.EDGE_PITCH || '+0Hz' }, raw); words = wsw;
   } else {
     const r = await elevenlabs(s.metin); fs.writeFileSync(raw, r.audio); words = r.words;
   }

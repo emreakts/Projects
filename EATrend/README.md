@@ -34,3 +34,9 @@ node make.js kisa-video-beyni          # gerçek ElevenLabs sesi
 - [ ] Çizim stili ve karakter geliştirme
 - [ ] Admin panel: takvim + dakikada bir saat kontrolü (21:00)
 - [ ] Instagram Graph API (profesyonel hesap + Meta app) ve YouTube Data API (Google onayı)
+
+## Ücretsiz ses (varsayılan)
+
+Ses kaynağı varsayılan olarak Microsoft Edge'in ücretsiz Türkçe sesleridir (anahtar gerekmez). Kurulum: `pip3 install edge-tts`.
+Karakterlerin sesleri `content/series/alsat/bible.json` içinde `edge` alanındadır (ses, hız, ton). Duygu etiketleri hız/ton ayarına çevrilir.
+ElevenLabs'e geçmek için Stüdyo'da "Ses kaynağı"nı değiştir ya da `.env`'e `SES_SAGLAYICI=elevenlabs` yaz.

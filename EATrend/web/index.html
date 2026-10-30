@@ -39,6 +39,8 @@ details summary{cursor:pointer;color:var(--mute);margin-top:12px}
 <section id="s1">
   <h2>1. Ses <small id="keyChip"></small></h2>
   <p class="hint">ElevenLabs hesabınla bağlan, sesi seç ve dinle. Anahtarın sadece bu bilgisayarda (.env) saklanır.</p>
+  <div class="row"><div><label>Ses kaynağı</label><select id="sesSag"><option value="edge">Ücretsiz: Microsoft Edge sesleri (anahtar gerekmez)</option><option value="elevenlabs">ElevenLabs (ücretli, daha doğal)</option></select></div>
+    <div style="align-self:end"><span class="hint" style="margin:0">Ücretsiz seçeneği için bilgisayarında bir kere <code>pip3 install edge-tts</code> çalıştırman gerekir.</span></div></div>
   <div class="row">
     <div><label>ElevenLabs API anahtarı (sk_ ile başlar)</label><input id="apiKey" type="password" placeholder="sk_…" autocomplete="off"></div>
     <div><label>Seçili ses ID</label><input id="voiceId" placeholder="Aşağıdan seç ya da yapıştır"></div>
@@ -120,12 +122,12 @@ let state = {}, cur = '';
 async function loadState() {
   state = await api('/api/state');
   $('keyChip').innerHTML = state.hasKey ? `<span class="chip ok">anahtar kayıtlı ${esc(state.keyHint)}</span>` : '<span class="chip bad">anahtar yok</span>';
-  $('voiceId').value = state.voiceId; $('model').value = state.model;
+  $('voiceId').value = state.voiceId; $('model').value = state.model; $('sesSag').value = state.sesSaglayici;
   for (const k of ['stability', 'similarity', 'style']) { $(k).value = state[k]; $(k + 'V').textContent = (+state[k]).toFixed(2); }
 }
 for (const k of ['stability', 'similarity', 'style']) $(k).oninput = () => $(k + 'V').textContent = (+$(k).value).toFixed(2);
 $('saveSet').onclick = async () => {
-  await api('/api/settings', { apiKey: $('apiKey').value, voiceId: $('voiceId').value, model: $('model').value, stability: $('stability').value, similarity: $('similarity').value, style: $('style').value });
+  await api('/api/settings', { sesSaglayici: $('sesSag').value, apiKey: $('apiKey').value, voiceId: $('voiceId').value, model: $('model').value, stability: $('stability').value, similarity: $('similarity').value, style: $('style').value });
   $('apiKey').value = ''; await loadState(); say('setMsg', 'Kaydedildi.', 'ok');
 };
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {

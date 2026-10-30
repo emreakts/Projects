@@ -1,7 +1,7 @@
 // Satırları karakterin kendi sesiyle okutur, kelime zamanlarını ve sahne aralıklarını çıkarır.
 // Kullanım: node dizi/ses.js <dizi> <bölüm> [--mock]
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
-const { loadEnv, bible, episode, episodeId, outDir } = require('../lib');
+const { loadEnv, bible, episode, episodeId, outDir, edgeSpeak } = require('../lib');
 loadEnv();
 const GAP_LINE = 0.22, TAIL_SCENE = 0.35;
 const plain = t => t.replace(/\[[^\]]*\]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -27,10 +27,11 @@ async function realLine(text, voice, file) {
   if (!r.ok) throw new Error('ElevenLabs ' + r.status + ': ' + (await r.text()).slice(0, 300));
   const j = await r.json(); fs.writeFileSync(file, Buffer.from(j.audio_base64, 'base64')); return { words: wordsFromAlignment(j.alignment), file, fmt: 'mp3' };
 }
+function edgeLine(text, ch, file) { const words = edgeSpeak(text, ch.edge || {}, file); if (!words.length) throw new Error('Edge ses boş döndü'); return { words, file, fmt: 'mp3' }; }
 const dur = (f, fmt) => parseFloat(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', '-f', fmt, f]).toString());
 
 (async () => {
-  const [dizi, n] = process.argv.slice(2), mock = process.argv.includes('--mock');
+  const [dizi, n] = process.argv.slice(2), mock = process.argv.includes('--mock'), edge = !mock && (process.env.SES_SAGLAYICI || 'edge') === 'edge';
   if (!dizi || !n) { console.error('kullanım: node dizi/ses.js <dizi> <bölüm> [--mock]'); process.exit(1); }
   const b = bible(dizi), ep = episode(dizi, n), dir = outDir(episodeId(dizi, n)), tl = { words: [], scenes: [] }, inputs = [];
   let cursor = 0.0, total = ep.sahneler.reduce((a, s) => a + s.satirlar.length, 0), done = 0;
@@ -39,7 +40,7 @@ const dur = (f, fmt) => parseFloat(execFileSync('ffprobe', ['-v', 'error', '-sho
     for (let li = 0; li < sc.satirlar.length; li++) {
       const l = sc.satirlar[li], ch = b.karakterler[l.k]; if (!ch) throw new Error('Bilinmeyen karakter: ' + l.k);
       const voice = ch.ses || process.env.ELEVENLABS_VOICE_ID, file = path.join(dir, `line-${si + 1}-${li + 1}.${mock ? 'wav' : 'mp3'}`);
-      const r = mock ? mockLine(l.m, file) : await realLine(l.m, voice, file);
+      const r = mock ? mockLine(l.m, file) : edge ? edgeLine(l.m, ch, file) : await realLine(l.m, voice, file);
       const first = r.words[0].start, shift = cursor - first + 0.05; // satırın ilk kelimesi imleçte başlasın
       for (const w of r.words) tl.words.push({ w: w.w, start: +(w.start + shift).toFixed(3), end: +(w.end + shift).toFixed(3), k: l.k, sc: si });
       inputs.push({ file, fmt: r.fmt, delay: Math.max(0, shift) });
