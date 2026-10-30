@@ -1,10 +1,8 @@
 {
-  "_not": "Türler sırayla döner: filozof, iliski, psikoloji, hayat. 'dogrulandi' true olmadan üretime girmez. Kaynakları tek tek kontrol et.",
-  "turler": ["filozof", "iliski", "psikoloji", "hayat"],
+  "_not": "EATrend: güncel trend konuları. Her gün bir tür, sırayla döner. Rakam/iddia içeren her satırın kaynağı elle doğrulanmadan 'dogrulandi' true yapılmaz; false olanlar üretime girmez.",
+  "turler": ["teknoloji", "internet-kulturu", "para-ekonomi", "yasam-psikoloji"],
+  "sahneTipleri": ["hook", "stat", "liste", "bar", "kapanis"],
   "gunler": [
-    { "gun": 1, "tur": "hayat", "baslik": "Kintsugi", "ilkCumle": "500 yıl önce bir Japon şogunun en sevdiği çay kasesi kırıldı.", "kaynak": "Ashikaga Yoshimasa kintsugi anlatısı (kontrol et)", "dogrulandi": false, "story": "kintsugi" },
-    { "gun": 2, "tur": "filozof", "baslik": "Diyojen ve Büyük İskender", "ilkCumle": "Dünyanın en güçlü adamı, sokakta yatan bir adama ne istediğini sordu.", "kaynak": "Plutarkhos, İskender'in Hayatı (kontrol et)", "dogrulandi": false },
-    { "gun": 3, "tur": "psikoloji", "baslik": "Zeigarnik etkisi", "ilkCumle": "Garson hiçbir şey not almadan 20 siparişi aklında tuttu. Ama hesabı ödeyince hepsini unuttu.", "kaynak": "Bluma Zeigarnik, 1927 (kontrol et)", "dogrulandi": false },
-    { "gun": 4, "tur": "iliski", "baslik": "Gottman'ın 5'e 1 kuralı", "ilkCumle": "Bir araştırmacı çiftlerin 15 dakikalık tartışmasına bakıp boşanıp boşanmayacaklarını tahmin etti.", "kaynak": "John Gottman araştırmaları (kontrol et)", "dogrulandi": false }
+    { "gun": 1, "tur": "yasam-psikoloji", "baslik": "Kısa videolar beynimize ne yapıyor?", "ilkCumle": "Bu hafta herkes aynı soruyu soruyor.", "kaynak": "", "dogrulandi": false, "story": "kisa-video-beyni" }
   ]
 }

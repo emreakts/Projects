@@ -1,6 +1,6 @@
 # EATrend
 
-Otomatik animasyon hikaye videosu üretim hattı (Atakan Tech'in "Claude Code ile Otomatik Animasyon Hesabı" videosundaki sistem).
+Otomatik animasyon hikaye videosu üretim hattı (Atakan Tech'in "Claude Code ile Otomatik Animasyon Hesabı" videosundaki sistem). İçerik: güncel trend konuları, modern kinetik tipografi tasarımı.
 
 ```
 metin + duygu notları ──► voice/tts.js ──► ses + kelime zamanları (boşluklar kısaltılır)
@@ -16,12 +16,12 @@ render/render.js ──► FFmpeg (kareler + ses, loudnorm) ──► out/<id>/<
 ```bash
 cp .env.example .env        # ElevenLabs anahtarı ve ses ID'si
 npm install
-node make.js kintsugi --mock   # sahte sesle test (anahtar gerekmez)
-node make.js kintsugi          # gerçek ElevenLabs sesi
+node make.js kisa-video-beyni --mock   # sahte sesle test (anahtar gerekmez)
+node make.js kisa-video-beyni          # gerçek ElevenLabs sesi
 ```
 
 - `content/topics.json`: 30 günlük konu tablosu. 4 tür dönüşümlü: filozof, ilişki, psikoloji, hayat. Kaynaklar elle doğrulanmadan `dogrulandi: true` yapma.
-- `content/stories/<id>.json`: metin (`[sakin]`, `[fısıltıyla]` gibi duygu notlarıyla) ve sahne tanımları (kelime indeksine bağlı).
+- `content/stories/<id>.json`: metin (`[sakin]`, `[fısıltıyla]` gibi duygu notlarıyla) ve sahne tanımları. Sahne tipleri: hook, stat, liste, bar, kapanis. Sahne başlangıcı `ankraj` (metinden bir ifade) ya da `kelime` (indeks) ile verilir.
 - Videoları tek tek üret, paralel render bilgisayarı çökertebilir.
 
 ## Sırada

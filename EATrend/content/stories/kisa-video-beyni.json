@@ -1,0 +1,13 @@
+{
+  "id": "kisa-video-beyni",
+  "baslik": "Kısa videolar beynimize ne yapıyor?",
+  "etiket": "#trend",
+  "durum": "DEMO: içerik doğrulanmadı, yayınlama",
+  "metin": "Bu hafta herkes aynı soruyu soruyor: kısa videolar beynimize ne yapıyor? [merak] Üç şey değişiyor. Birincisi, sabrımız. İkincisi, odağımız. Üçüncüsü, sıkıntıya tahammülümüz. [sakin] Peki ne yapmalı? Telefonu atmana gerek yok. Sadece her gün bir saat ekransız geçir. [vurgulu] Bunu bir hafta dene ve farkı kendin gör. Takip et, yarın başka bir trendi birlikte çözelim.",
+  "sahneler": [
+    { "tip": "hook", "kelime": 0, "metin": "Kısa videolar beynine ne yapıyor?", "vurgu": "beynine" },
+    { "tip": "liste", "ankraj": "Üç şey", "baslik": "Üç şey değişiyor", "maddeler": [{ "m": "Sabrımız", "t": 0.4 }, { "m": "Odağımız", "t": 1.6 }, { "m": "Sıkıntıya tahammülümüz", "t": 2.8 }] },
+    { "tip": "stat", "ankraj": "her gün bir saat", "deger": 1, "birim": "SAAT", "oran": 0.25, "etiket": "Her gün ekransız geçir" },
+    { "tip": "kapanis", "ankraj": "Bunu bir hafta", "metin": "7 gün dene, farkı gör", "buton": "Takip et" }
+  ]
+}
