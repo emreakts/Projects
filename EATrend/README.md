@@ -11,7 +11,11 @@ engine/ (tarayıcıda JS çizim) ◄──────────────�
 render/render.js ──► FFmpeg (kareler + ses, loudnorm) ──► out/<id>/<id>.mp4
 ```
 
-## Kullanım
+## Kullanım (Stüdyo, terminalsiz)
+
+Mac'te `baslat.command` dosyasına çift tıkla (ya da `npm start`), tarayıcıda `http://localhost:3000` açılır. Ses seçimi, hikaye düzenleme, ses dinleme ve video üretimi oradan yapılır.
+
+## Kullanım (terminal)
 
 ```bash
 cp .env.example .env        # ElevenLabs anahtarı ve ses ID'si

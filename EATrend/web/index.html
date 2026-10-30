@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EATrend Stüdyo</title>
+<style>
+:root{--bg:#0b0f1a;--panel:#131a2b;--line:#243049;--ink:#eef1f8;--mute:#8d99b3;--a:#ffb547;--ok:#4ade80;--bad:#ff6b6b;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,"SF Pro Text",Inter,Arial,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:18px 28px;border-bottom:1px solid var(--line)}
+header b{font-size:20px}header i{width:12px;height:12px;border-radius:50%;background:var(--a);display:inline-block}
+header span{color:var(--mute)}
+main{max-width:1100px;margin:0 auto;padding:24px 28px;display:grid;gap:20px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px}
+h2{margin:0 0 4px;font-size:17px}h2 small{color:var(--mute);font-weight:400;margin-left:8px}
+p.hint{margin:0 0 14px;color:var(--mute);font-size:13px}
+label{display:block;color:var(--mute);font-size:12px;margin:12px 0 5px;text-transform:uppercase;letter-spacing:.04em}
+input,select,textarea{width:100%;background:#0c1222;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;font:inherit}
+textarea{min-height:140px;resize:vertical}textarea.code{font:12px/1.4 ui-monospace,Menlo,monospace;min-height:180px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:760px){.row,.row3{grid-template-columns:1fr}}
+button{background:var(--a);color:#1a1200;border:0;border-radius:10px;padding:10px 16px;font:600 14px inherit;cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}button:disabled{opacity:.45;cursor:default}
+button.sm{padding:6px 11px;font-size:13px}
+.chip{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;background:#1d2740;color:var(--mute)}
+.chip.ok{background:#12301f;color:var(--ok)}.chip.bad{background:#3a1717;color:var(--bad)}
+.tabs{display:flex;gap:8px;margin:6px 0 12px}.tabs button{background:transparent;color:var(--mute);border:1px solid var(--line)}.tabs button.on{background:#1d2740;color:var(--ink);border-color:#33466b}
+.voices{display:grid;gap:8px;max-height:340px;overflow:auto}
+.v{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:#0c1222;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.v.sel{border-color:var(--a)}.v b{display:block}.v small{color:var(--mute)}.v .act{display:flex;gap:8px;align-items:center}
+.v audio{height:30px;max-width:200px}
+.msg{margin-top:10px;font-size:13px}.msg.bad{color:var(--bad)}.msg.ok{color:var(--ok)}
+.sl{display:grid;grid-template-columns:110px 1fr 40px;align-items:center;gap:10px;margin:8px 0}.sl input{padding:0}
+.bar{height:10px;background:#0c1222;border-radius:6px;overflow:hidden;margin-top:12px}.bar i{display:block;height:100%;width:30%;background:var(--a);animation:m 1.2s infinite ease-in-out}
+@keyframes m{0%{margin-left:-30%}100%{margin-left:100%}}
+video{max-height:560px;border-radius:12px;background:#000}.out{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;margin-top:14px}
+details summary{cursor:pointer;color:var(--mute);margin-top:12px}
+</style></head><body>
+<header><i></i><b>EATrend Stüdyo</b><span>ses seç, hikayeyi yaz, videoyu üret</span></header>
+<main>
+
+<section id="s1">
+  <h2>1. Ses <small id="keyChip"></small></h2>
+  <p class="hint">ElevenLabs hesabınla bağlan, sesi seç ve dinle. Anahtarın sadece bu bilgisayarda (.env) saklanır.</p>
+  <div class="row">
+    <div><label>ElevenLabs API anahtarı (sk_ ile başlar)</label><input id="apiKey" type="password" placeholder="sk_…" autocomplete="off"></div>
+    <div><label>Seçili ses ID</label><input id="voiceId" placeholder="Aşağıdan seç ya da yapıştır"></div>
+  </div>
+  <div class="row3">
+    <div><label>Model</label><select id="model"><option value="eleven_v3">eleven_v3 (duygu etiketleri)</option><option value="eleven_multilingual_v2">eleven_multilingual_v2 (kararlı)</option></select></div>
+    <div></div><div style="align-self:end"><button id="saveSet">Ayarları kaydet</button></div>
+  </div>
+  <label>Ses karakteri</label>
+  <div class="sl"><span>Kararlılık</span><input id="stability" type="range" min="0" max="1" step="0.05"><b id="stabilityV"></b></div>
+  <div class="sl"><span>Benzerlik</span><input id="similarity" type="range" min="0" max="1" step="0.05"><b id="similarityV"></b></div>
+  <div class="sl"><span>Canlılık</span><input id="style" type="range" min="0" max="1" step="0.05"><b id="styleV"></b></div>
+  <p class="hint">Kararlılık düşükse ses daha duygulu ama oynak, yüksekse düz ve sabit olur. Hikaye anlatımı için 0.4–0.6 iyi başlangıç. (eleven_v3 sadece 0, 0.5, 1 değerlerine yakın çalışır.)</p>
+  <div class="msg" id="setMsg"></div>
+
+  <div class="tabs"><button class="on" data-tab="mine">Hesabımdaki sesler</button><button data-tab="tr">Türkçe ses kütüphanesi</button></div>
+  <div id="tabMine"><button class="ghost sm" id="loadMine">Seslerimi getir</button><div class="voices" id="mineList"></div><div class="msg" id="mineMsg"></div></div>
+  <div id="tabTr" hidden><div class="row"><input id="trQ" placeholder="Ara (örn. anlatıcı, belgesel, kadın)"><div><button class="ghost sm" id="loadTr">Türkçe sesleri getir</button></div></div>
+    <div class="voices" id="trList" style="margin-top:10px"></div><div class="msg" id="trMsg"></div>
+    <p class="hint">Kütüphane seslerini API ile kullanmak ücretli plan ya da kredi ister. "Kullan" demek sesi hesabına ekler.</p></div>
+</section>
+
+<section id="s2">
+  <h2>2. Hikaye</h2>
+  <p class="hint">Metin ne kadar iyi yazılırsa ses de o kadar iyi çıkar. Duygu notlarını köşeli parantezle yaz: [sakin], [fısıltıyla], [heyecanlı].</p>
+  <div class="row"><div><label>Hikaye</label><select id="story"></select></div>
+    <div style="align-self:end;display:flex;gap:8px"><input id="newTitle" placeholder="Yeni hikaye başlığı"><button class="ghost" id="newBtn">Ekle</button></div></div>
+  <div class="row"><div><label>Başlık</label><input id="f_baslik"></div><div><label>Kaynak (videoda altta yazar)</label><input id="f_kaynak" placeholder="örn. Reuters, 2026"></div></div>
+  <div class="row"><div><label>Etiket</label><input id="f_etiket"></div><div><label>Tema</label><select id="f_tema"><option value="gece">Gece (koyu)</option><option value="gazete">Gazete (açık)</option></select></div></div>
+  <label>Anlatım metni</label><textarea id="f_metin"></textarea>
+  <details><summary>Gelişmiş: sahneler (JSON)</summary><textarea class="code" id="f_sahneler"></textarea>
+    <p class="hint">Sahneler metindeki ifadelere (ankraj) bağlıdır. Metindeki ifadeyi değiştirirsen ankrajı da güncelle.</p></details>
+  <div style="margin-top:12px"><button id="saveStory">Hikayeyi kaydet</button> <span class="msg" id="storyMsg"></span></div>
+</section>
+
+<section id="s3">
+  <h2>3. Üret</h2>
+  <p class="hint">Önce sesi dinle, beğenirsen videoyu üret. Sahte ses seçeneği kredi harcamaz, sadece görüntüyü denemek içindir.</p>
+  <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:14px;color:var(--ink)"><input type="checkbox" id="mock" style="width:auto"> Sahte ses kullan (ücretsiz test)</label>
+  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button id="voiceBtn">🔊 Sesi üret ve dinle</button><button id="renderBtn">🎬 Videoyu üret</button></div>
+  <div id="busy" hidden><div class="bar"><i></i></div></div>
+  <div class="msg" id="jobMsg"></div>
+  <div class="out"><div id="audioBox" hidden><label>Ses</label><audio id="audio" controls></audio></div>
+    <div id="videoBox" hidden><label>Video</label><video id="video" controls></video><div style="margin-top:8px"><a id="dl" download><button class="ghost sm" type="button">⬇ Videoyu indir</button></a></div></div></div>
+</section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const api = async (p, body) => (await fetch(p, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {})).json();
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const say = (id, t, cls = '') => { $(id).textContent = t; $(id).className = 'msg ' + cls; };
+let state = {}, cur = '';
+
+async function loadState() {
+  state = await api('/api/state');
+  $('keyChip').innerHTML = state.hasKey ? `<span class="chip ok">anahtar kayıtlı ${esc(state.keyHint)}</span>` : '<span class="chip bad">anahtar yok</span>';
+  $('voiceId').value = state.voiceId; $('model').value = state.model;
+  for (const k of ['stability', 'similarity', 'style']) { $(k).value = state[k]; $(k + 'V').textContent = (+state[k]).toFixed(2); }
+}
+for (const k of ['stability', 'similarity', 'style']) $(k).oninput = () => $(k + 'V').textContent = (+$(k).value).toFixed(2);
+$('saveSet').onclick = async () => {
+  await api('/api/settings', { apiKey: $('apiKey').value, voiceId: $('voiceId').value, model: $('model').value, stability: $('stability').value, similarity: $('similarity').value, style: $('style').value });
+  $('apiKey').value = ''; await loadState(); say('setMsg', 'Kaydedildi.', 'ok');
+};
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  $('tabMine').hidden = b.dataset.tab !== 'mine'; $('tabTr').hidden = b.dataset.tab !== 'tr';
+});
+const voiceRow = (v, btns) => `<div class="v ${state.voiceId === v.id ? 'sel' : ''}"><div><b>${esc(v.name)}</b><small>${esc(v.labels || v.category || '')} ${v.desc ? '· ' + esc(v.desc) : ''}</small></div><div class="act">${v.preview ? `<audio controls preload="none" src="${esc(v.preview)}"></audio>` : ''}${btns}</div></div>`;
+$('loadMine').onclick = async () => {
+  say('mineMsg', 'Yükleniyor…'); const r = await api('/api/voices');
+  if (r.error) return say('mineMsg', r.status === 401 || /permission/.test(r.error) ? 'Bu anahtarın "voices_read" izni yok. ElevenLabs\'te izinleri sınırlamadan yeni anahtar oluştur ya da ses ID\'sini elle yaz.' : r.error, 'bad');
+  say('mineMsg', ''); $('mineList').innerHTML = r.voices.map(v => voiceRow(v, `<button class="sm" data-use="${esc(v.id)}">Kullan</button>`)).join('') || 'Ses yok';
+};
+$('mineList').onclick = async e => { const id = e.target.dataset.use; if (!id) return; $('voiceId').value = id; await api('/api/settings', { voiceId: id }); await loadState(); say('setMsg', 'Ses seçildi.', 'ok'); $('loadMine').click(); };
+$('loadTr').onclick = async () => {
+  say('trMsg', 'Yükleniyor…'); const r = await api('/api/shared?q=' + encodeURIComponent($('trQ').value));
+  if (r.error) return say('trMsg', r.error, 'bad'); say('trMsg', '');
+  $('trList').innerHTML = r.voices.map(v => voiceRow(v, `<button class="sm" data-owner="${esc(v.owner)}" data-vid="${esc(v.id)}" data-name="${esc(v.name)}">Kullan</button>`)).join('') || 'Sonuç yok';
+};
+$('trList').onclick = async e => { const d = e.target.dataset; if (!d.vid) return; e.target.disabled = true;
+  const r = await api('/api/shared/add', { owner: d.owner, voiceId: d.vid, name: d.name }); e.target.disabled = false;
+  if (r.error) return say('trMsg', r.status === 402 || /paid|credit|plan/i.test(r.error) ? 'Bu ses için ücretli plan ya da kredi gerekiyor: ' + r.error : r.error, 'bad');
+  await loadState(); say('trMsg', '“' + d.name + '” hesabına eklendi ve seçildi.', 'ok'); };
+
+async function loadStories(sel) {
+  const { stories } = await api('/api/stories'); $('story').innerHTML = stories.map(s => `<option value="${esc(s.id)}">${esc(s.baslik)}</option>`).join('');
+  cur = sel || cur || (stories[0] && stories[0].id) || ''; $('story').value = cur; if (cur) loadStory();
+}
+async function loadStory() {
+  cur = $('story').value; const s = await api('/api/story?id=' + cur); if (s.error) return;
+  $('f_baslik').value = s.baslik || ''; $('f_kaynak').value = s.kaynak || ''; $('f_etiket').value = s.etiket || ''; $('f_tema').value = s.tema || 'gece';
+  $('f_metin').value = s.metin || ''; $('f_sahneler').value = JSON.stringify(s.sahneler, null, 2); window._story = s;
+}
+$('story').onchange = loadStory;
+$('saveStory').onclick = async () => {
+  let sahneler; try { sahneler = JSON.parse($('f_sahneler').value); } catch { return say('storyMsg', 'Sahneler geçerli JSON değil.', 'bad'); }
+  const s = { ...window._story, baslik: $('f_baslik').value, kaynak: $('f_kaynak').value, etiket: $('f_etiket').value, tema: $('f_tema').value, metin: $('f_metin').value, sahneler };
+  const r = await api('/api/story', { id: cur, story: s }); say('storyMsg', r.error || 'Kaydedildi.', r.error ? 'bad' : 'ok');
+};
+$('newBtn').onclick = async () => { const r = await api('/api/story/new', { baslik: $('newTitle').value }); if (r.error) return say('storyMsg', r.error, 'bad'); $('newTitle').value = ''; loadStories(r.id); };
+
+let poll;
+async function start(kind) {
+  $('saveStory').click(); await new Promise(r => setTimeout(r, 250));
+  const r = await api('/api/' + kind, { id: cur, mock: $('mock').checked }); if (r.error) return say('jobMsg', r.error, 'bad');
+  $('busy').hidden = false; $('voiceBtn').disabled = $('renderBtn').disabled = true; say('jobMsg', 'Çalışıyor…');
+  clearInterval(poll); poll = setInterval(async () => {
+    const j = await api('/api/job'); say('jobMsg', j.progress || '');
+    if (j.state === 'running') return; clearInterval(poll); $('busy').hidden = true; $('voiceBtn').disabled = $('renderBtn').disabled = false;
+    if (j.state === 'error') return say('jobMsg', j.progress, 'bad');
+    const t = Date.now(); say('jobMsg', 'Hazır.', 'ok');
+    if (j.what === 'voice') { $('audio').src = `/out/${j.id}/voice.wav?t=${t}`; $('audioBox').hidden = false; $('audio').play().catch(() => {}); }
+    else { $('video').src = `/out/${j.id}/${j.id}.mp4?t=${t}`; $('dl').href = `/out/${j.id}/${j.id}.mp4`; $('dl').download = j.id + '.mp4'; $('videoBox').hidden = false; $('audio').src = `/out/${j.id}/voice.wav?t=${t}`; $('audioBox').hidden = false; }
+  }, 700);
+}
+$('voiceBtn').onclick = () => start('voice'); $('renderBtn').onclick = () => start('render');
+loadState().then(() => loadStories());
+</script></body></html>

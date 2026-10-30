@@ -2,11 +2,12 @@
   "name": "eatrend",
   "version": "0.1.0",
   "private": true,
-  "description": "Otomatik animasyon hikaye videosu üretim hattı",
+  "description": "Otomatik animasyon hikaye videosu \u00fcretim hatt\u0131",
   "scripts": {
     "voice": "node voice/tts.js",
     "render": "node render/render.js",
-    "make": "node make.js"
+    "make": "node make.js",
+    "start": "node server.js"
   },
   "dependencies": {
     "playwright": "^1.50.0"
