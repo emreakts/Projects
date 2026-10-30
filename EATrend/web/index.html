@@ -2,216 +2,280 @@
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EATrend Stüdyo</title>
 <style>
-:root{--bg:#0b0f1a;--panel:#131a2b;--line:#243049;--ink:#eef1f8;--mute:#8d99b3;--a:#ffb547;--ok:#4ade80;--bad:#ff6b6b;color-scheme:dark}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,"SF Pro Text",Inter,Arial,sans-serif}
-header{display:flex;align-items:center;gap:12px;padding:18px 28px;border-bottom:1px solid var(--line)}
-header b{font-size:20px}header i{width:12px;height:12px;border-radius:50%;background:var(--a);display:inline-block}
-header span{color:var(--mute)}
-main{max-width:1100px;margin:0 auto;padding:24px 28px;display:grid;gap:20px}
-section{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px}
-h2{margin:0 0 4px;font-size:17px}h2 small{color:var(--mute);font-weight:400;margin-left:8px}
-p.hint{margin:0 0 14px;color:var(--mute);font-size:13px}
-label{display:block;color:var(--mute);font-size:12px;margin:12px 0 5px;text-transform:uppercase;letter-spacing:.04em}
-input,select,textarea{width:100%;background:#0c1222;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;font:inherit}
-textarea{min-height:140px;resize:vertical}textarea.code{font:12px/1.4 ui-monospace,Menlo,monospace;min-height:180px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media(max-width:760px){.row,.row3{grid-template-columns:1fr}}
-button{background:var(--a);color:#1a1200;border:0;border-radius:10px;padding:10px 16px;font:600 14px inherit;cursor:pointer}
-button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}button:disabled{opacity:.45;cursor:default}
-button.sm{padding:6px 11px;font-size:13px}
-.chip{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;background:#1d2740;color:var(--mute)}
-.chip.ok{background:#12301f;color:var(--ok)}.chip.bad{background:#3a1717;color:var(--bad)}
-.tabs{display:flex;gap:8px;margin:6px 0 12px}.tabs button{background:transparent;color:var(--mute);border:1px solid var(--line)}.tabs button.on{background:#1d2740;color:var(--ink);border-color:#33466b}
-.voices{display:grid;gap:8px;max-height:340px;overflow:auto}
-.v{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:#0c1222;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.v.sel{border-color:var(--a)}.v b{display:block}.v small{color:var(--mute)}.v .act{display:flex;gap:8px;align-items:center}
-.v audio{height:30px;max-width:200px}
-.msg{margin-top:10px;font-size:13px}.msg.bad{color:var(--bad)}.msg.ok{color:var(--ok)}
-.sl{display:grid;grid-template-columns:110px 1fr 40px;align-items:center;gap:10px;margin:8px 0}.sl input{padding:0}
-.bar{height:10px;background:#0c1222;border-radius:6px;overflow:hidden;margin-top:12px}.bar i{display:block;height:100%;width:30%;background:var(--a);animation:m 1.2s infinite ease-in-out}
-@keyframes m{0%{margin-left:-30%}100%{margin-left:100%}}
-video{max-height:560px;border-radius:12px;background:#000}.out{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;margin-top:14px}
-details summary{cursor:pointer;color:var(--mute);margin-top:12px}
+:root{--bg:#090c15;--side:#0d1220;--panel:#121929;--panel2:#0e1422;--line:#222d45;--ink:#eef1f8;--mute:#8b97b1;--a:#ffb547;--a2:#5eead4;--ok:#4ade80;--bad:#ff6b6b;--r:14px;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,"SF Pro Text",Inter,Arial,sans-serif;display:grid;grid-template-columns:248px 1fr}
+@media(max-width:860px){body{grid-template-columns:1fr}aside{position:static!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap;padding:12px!important}aside .setup{display:none}}
+aside{position:sticky;top:0;height:100vh;background:var(--side);border-right:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:6px}
+.logo{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;padding:2px 10px 16px}.logo i{width:12px;height:12px;border-radius:50%;background:var(--a);box-shadow:0 0 14px var(--a)}
+nav button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:10px;color:var(--mute);cursor:pointer;font-weight:600}
+nav button:hover{background:#151d31;color:var(--ink)}nav button.on{background:#1a2440;color:var(--ink)}nav button span.n{width:22px;height:22px;border-radius:7px;background:#232f4d;display:grid;place-items:center;font-size:12px}
+nav button.on span.n{background:var(--a);color:#1a1200}
+.setup{margin-top:auto;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px}.setup b{display:block;margin-bottom:6px;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
+.setup div{display:flex;justify-content:space-between;padding:3px 0}.dot{width:9px;height:9px;border-radius:50%;background:var(--bad);display:inline-block;margin-right:7px}.dot.ok{background:var(--ok)}
+main{padding:28px 34px 80px;max-width:1080px;width:100%}
+h1{margin:0 0 4px;font-size:26px;letter-spacing:-.01em}.sub{color:var(--mute);margin:0 0 22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;margin-bottom:18px}
+.card h3{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.card p.hint{margin:0 0 14px}
+.hint{color:var(--mute);font-size:13px}.hint code,code{background:#0b1120;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font:12px ui-monospace,Menlo,monospace;color:var(--a2)}
+label.l{display:block;color:var(--mute);font-size:12px;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+input,select,textarea{width:100%;background:#0b1120;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;font:inherit;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:0;border-color:#4a5f95}textarea{resize:vertical;min-height:70px}
+input[type=range]{padding:0;accent-color:var(--a)}input[type=checkbox]{width:auto;accent-color:var(--a)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+@media(max-width:700px){.row,.row3{grid-template-columns:1fr}main{padding:20px 16px 80px}}
+button.b{background:var(--a);color:#1a1200;border:0;border-radius:10px;padding:10px 16px;font:700 14px inherit;cursor:pointer;transition:transform .1s,opacity .15s}
+button.b:hover{transform:translateY(-1px)}button.b:disabled{opacity:.4;cursor:default;transform:none}button.g{background:transparent;color:var(--ink);border:1px solid var(--line)}button.g:hover{border-color:#44558a}
+button.sm{padding:6px 11px;font-size:13px}button.lg{padding:13px 22px;font-size:16px;border-radius:12px}button.x{background:transparent;border:0;color:var(--mute);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:6px}button.x:hover{background:#1d2740;color:var(--bad)}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:600;background:#1d2740;color:var(--mute)}.chip.ok{background:#12301f;color:var(--ok)}.chip.bad{background:#3a1717;color:var(--bad)}.chip.a{background:#3a2a0c;color:var(--a)}
+.seg{display:inline-flex;background:#0b1120;border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px}.seg button{all:unset;cursor:pointer;padding:8px 14px;border-radius:8px;font-weight:600;font-size:14px;color:var(--mute)}.seg button.on{background:#1f2b4a;color:var(--ink)}
+details{margin-top:14px}summary{cursor:pointer;color:var(--mute);font-weight:600;padding:6px 0}summary:hover{color:var(--ink)}
+.chars{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:800px){.chars{grid-template-columns:1fr}}
+.char{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;border-top:3px solid var(--c)}.char h4{margin:0 0 2px;color:var(--c);font-size:17px}.char small{color:var(--mute);display:block;margin-bottom:8px;font-size:12px}
+.sl{display:grid;grid-template-columns:54px 1fr 58px;gap:8px;align-items:center;font-size:13px;color:var(--mute);margin:6px 0}.sl b{color:var(--ink);text-align:right}
+.scene{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}.scene>header{display:flex;align-items:center;gap:8px;margin-bottom:10px}.scene>header b{flex:1}
+.line{display:grid;grid-template-columns:110px 1fr 32px;gap:8px;margin:6px 0}@media(max-width:600px){.line{grid-template-columns:90px 1fr 32px}}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 16px}.step{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.step b{display:block}.step small{color:var(--mute)}
+.step.done{border-color:#1d5a35}.step.done b::before{content:"✓ ";color:var(--ok)}.step.run{border-color:var(--a)}
+.bar{height:6px;background:#0b1120;border-radius:6px;overflow:hidden;margin:12px 0}.bar i{display:block;height:100%;width:30%;background:linear-gradient(90deg,var(--a),var(--a2));animation:m 1.2s infinite ease-in-out}@keyframes m{0%{margin-left:-30%}100%{margin-left:100%}}
+.thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.th{position:relative}.th img{height:150px;border-radius:10px;border:1px solid var(--line);display:block}.th button{position:absolute;right:6px;bottom:6px}
+video{max-height:560px;border-radius:12px;background:#000;max-width:100%}audio{height:34px;max-width:100%}
+.voices{display:grid;gap:8px;max-height:320px;overflow:auto;margin-top:10px}.v{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}.v.sel{border-color:var(--a)}.v small{color:var(--mute)}.v .act{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.v audio{height:30px;max-width:180px}
+#toast{position:fixed;right:22px;bottom:22px;display:grid;gap:8px;z-index:9}#toast div{background:#1a2340;border:1px solid #33466b;border-left:4px solid var(--ok);padding:10px 16px;border-radius:10px;box-shadow:0 8px 30px #0008;max-width:380px;font-size:14px}#toast div.bad{border-left-color:var(--bad)}
+.view{display:none}.view.on{display:block}.out{display:flex;gap:22px;flex-wrap:wrap;margin-top:14px}
 </style></head><body>
-<header><i></i><b>EATrend Stüdyo</b><span>ses seç, hikayeyi yaz, videoyu üret</span></header>
+<aside>
+  <div class="logo"><i></i>EATrend</div>
+  <nav>
+    <button data-v="v1" class="on"><span class="n">1</span>Kurulum</button>
+    <button data-v="v2"><span class="n">2</span>Dizi: Al-Sat</button>
+    <button data-v="v3"><span class="n">3</span>Trend videoları</button>
+  </nav>
+  <div class="setup"><b>Hazırlık durumu</b>
+    <div><span><i class="dot" id="dSes"></i>Ses</span><span id="tSes"></span></div>
+    <div><span><i class="dot" id="dImg"></i>Görsel</span><span id="tImg"></span></div>
+  </div>
+</aside>
 <main>
 
-<section id="s1">
-  <h2>1. Ses <small id="keyChip"></small></h2>
-  <p class="hint">ElevenLabs hesabınla bağlan, sesi seç ve dinle. Anahtarın sadece bu bilgisayarda (.env) saklanır.</p>
-  <div class="row"><div><label>Ses kaynağı</label><select id="sesSag"><option value="edge">Ücretsiz: Microsoft Edge sesleri (anahtar gerekmez)</option><option value="elevenlabs">ElevenLabs (ücretli, daha doğal)</option></select></div>
-    <div style="align-self:end"><span class="hint" style="margin:0">Ücretsiz seçeneği için bilgisayarında bir kere <code>pip3 install edge-tts</code> çalıştırman gerekir.</span></div></div>
-  <div class="row">
-    <div><label>ElevenLabs API anahtarı (sk_ ile başlar)</label><input id="apiKey" type="password" placeholder="sk_…" autocomplete="off"></div>
-    <div><label>Seçili ses ID</label><input id="voiceId" placeholder="Aşağıdan seç ya da yapıştır"></div>
-  </div>
-  <div class="row3">
-    <div><label>Model</label><select id="model"><option value="eleven_v3">eleven_v3 (duygu etiketleri)</option><option value="eleven_multilingual_v2">eleven_multilingual_v2 (kararlı)</option></select></div>
-    <div></div><div style="align-self:end"><button id="saveSet">Ayarları kaydet</button></div>
-  </div>
-  <label>Ses karakteri</label>
-  <div class="sl"><span>Kararlılık</span><input id="stability" type="range" min="0" max="1" step="0.05"><b id="stabilityV"></b></div>
-  <div class="sl"><span>Benzerlik</span><input id="similarity" type="range" min="0" max="1" step="0.05"><b id="similarityV"></b></div>
-  <div class="sl"><span>Canlılık</span><input id="style" type="range" min="0" max="1" step="0.05"><b id="styleV"></b></div>
-  <p class="hint">Kararlılık düşükse ses daha duygulu ama oynak, yüksekse düz ve sabit olur. Hikaye anlatımı için 0.4–0.6 iyi başlangıç. (eleven_v3 sadece 0, 0.5, 1 değerlerine yakın çalışır.)</p>
-  <div class="msg" id="setMsg"></div>
+<!-- 1 KURULUM -->
+<section class="view on" id="v1">
+  <h1>Kurulum</h1><p class="sub">Bir kere ayarla, sonra sadece üret. Anahtarların yalnızca bu bilgisayarda saklanır.</p>
 
-  <div class="tabs"><button class="on" data-tab="mine">Hesabımdaki sesler</button><button data-tab="tr">Türkçe ses kütüphanesi</button></div>
-  <div id="tabMine"><button class="ghost sm" id="loadMine">Seslerimi getir</button><div class="voices" id="mineList"></div><div class="msg" id="mineMsg"></div></div>
-  <div id="tabTr" hidden><div class="row"><input id="trQ" placeholder="Ara (örn. anlatıcı, belgesel, kadın)"><div><button class="ghost sm" id="loadTr">Türkçe sesleri getir</button></div></div>
-    <div class="voices" id="trList" style="margin-top:10px"></div><div class="msg" id="trMsg"></div>
-    <p class="hint">Kütüphane seslerini API ile kullanmak ücretli plan ya da kredi ister. "Kullan" demek sesi hesabına ekler.</p></div>
+  <div class="card"><h3>🔊 Ses kaynağı <span id="sesChip"></span></h3>
+    <p class="hint">Karakterlerin ve anlatıcının sesi nereden gelsin?</p>
+    <div class="seg" id="sesSeg"><button data-s="edge">Ücretsiz (Edge sesleri)</button><button data-s="elevenlabs">ElevenLabs (ücretli, daha doğal)</button></div>
+    <div id="edgeBox" style="margin-top:14px"><div class="flex"><span id="edgeChip"></span><span class="hint" id="edgeHint"></span></div>
+      <div class="flex" id="edgeCmd" hidden style="margin-top:8px"><code>pip3 install edge-tts</code><button class="b g sm" id="copyEdge">Kopyala</button><button class="b g sm" id="recheck">Tekrar kontrol et</button></div></div>
+    <div id="elBox" hidden style="margin-top:14px">
+      <div class="row"><div><label class="l">API anahtarı (sk_ ile başlar) <span id="keyChip"></span></label><input id="apiKey" type="password" placeholder="sk_…" autocomplete="off"></div>
+        <div><label class="l">Anlatıcı ses ID</label><input id="voiceId" placeholder="Aşağıdan seç ya da yapıştır"></div></div>
+      <details><summary>Gelişmiş ses ayarları</summary>
+        <div class="row"><div><label class="l">Model</label><select id="model"><option value="eleven_v3">eleven_v3 (duygu etiketleri)</option><option value="eleven_multilingual_v2">eleven_multilingual_v2 (kararlı)</option></select></div><div></div></div>
+        <div class="sl"><span>Kararlılık</span><input id="stability" type="range" min="0" max="1" step="0.05"><b id="stabilityV"></b></div>
+        <div class="sl"><span>Benzerlik</span><input id="similarity" type="range" min="0" max="1" step="0.05"><b id="similarityV"></b></div>
+        <div class="sl"><span>Canlılık</span><input id="style" type="range" min="0" max="1" step="0.05"><b id="styleV"></b></div>
+        <p class="hint">Hikaye anlatımı için kararlılık 0.4–0.6 iyi bir başlangıçtır.</p></details>
+      <div class="flex" style="margin-top:12px"><button class="b g sm" id="loadMine">Seslerimi getir</button><button class="b g sm" id="loadTr">Türkçe kütüphane</button><input id="trQ" placeholder="Ara (anlatıcı, belgesel…)" style="max-width:240px"></div>
+      <div class="voices" id="voiceList"></div>
+    </div>
+    <div style="margin-top:14px"><button class="b" id="saveSes">Ses ayarlarını kaydet</button></div>
+  </div>
+
+  <div class="card"><h3>🖼 Görsel üretimi <span id="imgChip"></span></h3>
+    <p class="hint">Dizi sahnelerinin görselleri yapay zekâ servisiyle üretilir. Her görsel küçük bir ücret demektir.</p>
+    <div class="seg" id="imgSeg"><button data-s="gemini">Gemini (Google)</button><button data-s="openai">OpenAI</button></div>
+    <label class="l">API anahtarı</label><input id="imgKey" type="password" placeholder="Anahtarı yapıştır" autocomplete="off">
+    <div style="margin-top:12px"><button class="b" id="saveImg">Görsel ayarlarını kaydet</button></div>
+  </div>
 </section>
 
-<section id="s2">
-  <h2>2. Hikaye</h2>
-  <p class="hint">Metin ne kadar iyi yazılırsa ses de o kadar iyi çıkar. Duygu notlarını köşeli parantezle yaz: [sakin], [fısıltıyla], [heyecanlı].</p>
-  <div class="row"><div><label>Hikaye</label><select id="story"></select></div>
-    <div style="align-self:end;display:flex;gap:8px"><input id="newTitle" placeholder="Yeni hikaye başlığı"><button class="ghost" id="newBtn">Ekle</button></div></div>
-  <div class="row"><div><label>Başlık</label><input id="f_baslik"></div><div><label>Kaynak (videoda altta yazar)</label><input id="f_kaynak" placeholder="örn. Reuters, 2026"></div></div>
-  <div class="row"><div><label>Etiket</label><input id="f_etiket"></div><div><label>Tema</label><select id="f_tema"><option value="gece">Gece (koyu)</option><option value="gazete">Gazete (açık)</option></select></div></div>
-  <label>Anlatım metni</label><textarea id="f_metin"></textarea>
-  <details><summary>Gelişmiş: sahneler (JSON)</summary><textarea class="code" id="f_sahneler"></textarea>
-    <p class="hint">Sahneler metindeki ifadelere (ankraj) bağlıdır. Metindeki ifadeyi değiştirirsen ankrajı da güncelle.</p></details>
-  <div style="margin-top:12px"><button id="saveStory">Hikayeyi kaydet</button> <span class="msg" id="storyMsg"></span></div>
-</section>
+<!-- 2 DİZİ -->
+<section class="view" id="v2">
+  <h1>Bıdık ile Zıpır Al-Sat</h1><p class="sub">Kurgusal komedi dizisi. Karakterleri ayarla, senaryoyu yaz, tek tuşla videoyu üret.</p>
 
-<section id="s3">
-  <h2>3. Üret</h2>
-  <p class="hint">Önce sesi dinle, beğenirsen videoyu üret. Sahte ses seçeneği kredi harcamaz, sadece görüntüyü denemek içindir.</p>
-  <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:14px;color:var(--ink)"><input type="checkbox" id="mock" style="width:auto"> Sahte ses kullan (ücretsiz test)</label>
-  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button id="voiceBtn">🔊 Sesi üret ve dinle</button><button id="renderBtn">🎬 Videoyu üret</button></div>
-  <div id="busy" hidden><div class="bar"><i></i></div></div>
-  <div class="msg" id="jobMsg"></div>
-  <div class="out"><div id="audioBox" hidden><label>Ses</label><audio id="audio" controls></audio></div>
-    <div id="videoBox" hidden><label>Video</label><video id="video" controls></video><div style="margin-top:8px"><a id="dl" download><button class="ghost sm" type="button">⬇ Videoyu indir</button></a></div></div></div>
-</section>
+  <div class="card"><h3>🎭 Karakterler</h3><p class="hint">Her karakter kendi sesiyle konuşur. Ayarı değiştir, "Dinle" ile dene.</p><div class="chars" id="chars"></div></div>
 
-<section id="s4">
-  <h2>4. Dizi: Bıdık ile Zıpır Al-Sat <small>komik yapay zekâ serisi</small></h2>
-  <p class="hint">İki özgün karakter, her biri kendi sesiyle konuşur. Görseller yapay zekâ API'siyle üretilir (her görsel küçük bir ücret demektir). Kurgusal bir dizidir, gerçek kişi ve olay yoktur.</p>
-  <div class="row"><div><label>Görsel üretim servisi</label><select id="imgProv"><option value="gemini">Gemini (Google)</option><option value="openai">OpenAI</option></select></div>
-    <div><label>API anahtarı <span id="imgKeyChip"></span></label><input id="imgKey" type="password" placeholder="Anahtarı yapıştır, Kaydet'e bas" autocomplete="off"></div></div>
-  <div style="margin-top:10px"><button class="ghost" id="saveImg">Görsel ayarlarını kaydet</button> <span class="msg" id="imgMsg"></span></div>
-
-  <label>Karakter sesleri</label>
-  <div id="chars"></div>
-  <p class="hint">Ses seçmek için yukarıdaki ses listesinde sesin yanındaki <b>Bıdık</b> ya da <b>Zıpır</b> butonuna bas. Boş bırakılırsa ana ses kullanılır.</p>
-
-  <div class="row"><div><label>Bölüm</label><select id="epSel"></select></div>
-    <div style="align-self:end"><button class="ghost" id="epNew">+ Yeni bölüm</button></div></div>
-  <label>Bölüm senaryosu (JSON)</label><textarea class="code" id="epJson" style="min-height:260px"></textarea>
-  <p class="hint">Her sahnede: <code>kimler</code>, <code>mekan</code>, <code>aksiyon</code>, <code>satirlar</code> (k: bidik/zipir, m: replik) ve istersen <code>kasa</code> (önce/sonra).</p>
-  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
-    <button class="ghost" id="epSave">Bölümü kaydet</button>
-    <button id="epImgs">🖼 Görselleri üret</button><button id="epVoice">🔊 Sesleri üret</button><button id="epVideo">🎬 Videoyu oluştur</button><button class="ghost" id="epAll">Hepsini yap</button>
+  <div class="card"><div class="flex" style="justify-content:space-between"><h3 style="margin:0">📝 Bölüm senaryosu <span id="saveChip"></span></h3>
+    <div class="flex"><select id="epSel" style="width:auto"></select><button class="b g sm" id="epNew">+ Yeni bölüm</button></div></div>
+    <label class="l">Bölüm başlığı (videonun başında görünür)</label><input id="epTitle">
+    <label class="l" style="margin-top:18px">Sahneler</label><div id="scenes"></div>
+    <button class="b g sm" id="addScene">+ Sahne ekle</button>
+    <p class="hint" style="margin-top:10px">İpucu: <b>Mekan</b> ve <b>aksiyon</b> alanlarını İngilizce yaz, görsel yapay zekâsı daha iyi anlar. Replikleri Türkçe yaz, duygu için <code>[heyecanlı]</code> gibi etiket ekleyebilirsin.</p>
+    <details><summary>Gelişmiş: ham JSON</summary><textarea id="epJson" style="min-height:220px;font:12px ui-monospace,Menlo,monospace"></textarea><button class="b g sm" id="applyJson" style="margin-top:8px">JSON'u uygula</button></details>
   </div>
-  <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:14px;color:var(--ink)"><input type="checkbox" id="epMock" style="width:auto"> Sahte görsel ve ses (ücretsiz test)</label>
-  <div id="epBusy" hidden><div class="bar"><i></i></div></div><div class="msg" id="epMsg"></div>
-  <div id="epThumbs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"></div>
-  <div class="out"><div id="epVideoBox" hidden><label>Video</label><video id="epVid" controls></video><div style="margin-top:8px"><a id="epDl" download><button class="ghost sm" type="button">⬇ Videoyu indir</button></a></div></div></div>
+
+  <div class="card"><h3>🎬 Üretim</h3>
+    <div class="steps"><div class="step" id="stG"><b>Görseller</b><small id="stGt">—</small></div><div class="step" id="stS"><b>Sesler</b><small id="stSt">—</small></div><div class="step" id="stV"><b>Video</b><small id="stVt">—</small></div></div>
+    <div class="flex"><button class="b lg" id="epVideo">▶ Videoyu oluştur</button>
+      <label class="flex hint" style="margin:0"><input type="checkbox" id="epMock"> Test modu (sahte görsel ve ses, ücretsiz)</label></div>
+    <p class="hint" style="margin-top:8px">Eksik adımları kendisi tamamlar: hazır görselleri ve güncel sesi tekrar üretmez.</p>
+    <details><summary>Adım adım / yeniden üret</summary><div class="flex" style="margin-top:8px"><button class="b g sm" id="epImgs">Tüm görselleri yeniden üret</button><button class="b g sm" id="epVoice">Sesleri yeniden üret</button></div></details>
+    <div id="epBusy" hidden><div class="bar"><i></i></div></div><div class="hint" id="epMsg" style="min-height:20px"></div>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="out"><div id="epVideoBox" hidden><video id="epVid" controls></video><div style="margin-top:8px"><a id="epDl" download><button class="b g sm" type="button">⬇ Videoyu indir</button></a></div></div></div>
+  </div>
+</section>
+
+<!-- 3 TREND -->
+<section class="view" id="v3">
+  <h1>Trend videoları</h1><p class="sub">Tek anlatıcılı, bilgi kartlı videolar. Metni yaz, sesi dinle, videoyu üret.</p>
+  <div class="card"><div class="row"><div><label class="l" style="margin-top:0">Hikaye</label><select id="story"></select></div>
+    <div><label class="l" style="margin-top:0">Yeni hikaye</label><div class="flex" style="flex-wrap:nowrap"><input id="newTitle" placeholder="Başlık"><button class="b g" id="newBtn">Ekle</button></div></div></div>
+    <div class="row"><div><label class="l">Başlık</label><input id="f_baslik"></div><div><label class="l">Kaynak (videoda altta yazar)</label><input id="f_kaynak" placeholder="örn. Reuters, 2026"></div></div>
+    <div class="row"><div><label class="l">Etiket</label><input id="f_etiket"></div><div><label class="l">Tema</label><select id="f_tema"><option value="gece">Gece (koyu)</option><option value="gazete">Gazete (açık)</option></select></div></div>
+    <label class="l">Anlatım metni</label><textarea id="f_metin" style="min-height:150px"></textarea>
+    <details><summary>Gelişmiş: sahneler (JSON)</summary><textarea id="f_sahneler" style="min-height:180px;font:12px ui-monospace,Menlo,monospace"></textarea><p class="hint">Sahneler metindeki ifadelere (ankraj) bağlıdır. Metni değiştirirsen ankrajı da güncelle.</p></details>
+    <div class="flex" style="margin-top:14px"><button class="b g" id="saveStory">Kaydet</button><button class="b" id="voiceBtn">🔊 Sesi dinle</button><button class="b lg" id="renderBtn">▶ Videoyu üret</button>
+      <label class="flex hint" style="margin:0"><input type="checkbox" id="mock"> Test modu</label></div>
+    <div id="busy" hidden><div class="bar"><i></i></div></div><div class="hint" id="jobMsg" style="min-height:20px"></div>
+    <div class="out"><div id="audioBox" hidden><audio id="audio" controls></audio></div><div id="videoBox" hidden><video id="video" controls></video><div style="margin-top:8px"><a id="dl" download><button class="b g sm" type="button">⬇ Videoyu indir</button></a></div></div></div>
+  </div>
 </section>
 </main>
+<div id="toast"></div>
+
 <script>
 const $ = id => document.getElementById(id);
 const api = async (p, body) => (await fetch(p, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {})).json();
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const say = (id, t, cls = '') => { $(id).textContent = t; $(id).className = 'msg ' + cls; };
-let state = {}, cur = '';
+const toast = (t, bad) => { const d = document.createElement('div'); d.textContent = t; if (bad) d.className = 'bad'; $('toast').append(d); setTimeout(() => d.remove(), bad ? 7000 : 3200); };
+let state = {}, dz = { bible: null, bolumler: [], n: 1, ep: null }, edgeOk = null;
 
+// ---- gezinme
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => { document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === b.dataset.v)); try { localStorage.v = b.dataset.v } catch {} });
+try { const v = localStorage.v; if (v) document.querySelector(`nav button[data-v=${v}]`)?.click(); } catch {}
+const seg = (id, val, fn) => { document.querySelectorAll(`#${id} button`).forEach(b => { b.classList.toggle('on', b.dataset.s === val); b.onclick = () => { seg(id, b.dataset.s, fn); fn && fn(b.dataset.s); }; }); };
+
+// ---- durum
 async function loadState() {
-  state = await api('/api/state');
-  $('keyChip').innerHTML = state.hasKey ? `<span class="chip ok">anahtar kayıtlı ${esc(state.keyHint)}</span>` : '<span class="chip bad">anahtar yok</span>';
-  $('voiceId').value = state.voiceId; $('model').value = state.model; $('sesSag').value = state.sesSaglayici;
+  state = await api('/api/state'); const elOn = state.sesSaglayici === 'elevenlabs';
+  seg('sesSeg', state.sesSaglayici, showSes); showSes(state.sesSaglayici);
+  seg('imgSeg', state.imageProvider, () => {});
+  $('voiceId').value = state.voiceId; $('model').value = state.model;
   for (const k of ['stability', 'similarity', 'style']) { $(k).value = state[k]; $(k + 'V').textContent = (+state[k]).toFixed(2); }
+  $('keyChip').innerHTML = state.hasKey ? `<span class="chip ok">kayıtlı ${esc(state.keyHint)}</span>` : '<span class="chip bad">yok</span>';
+  const imgOk = state.imageProvider === 'openai' ? state.hasOpenai : state.hasGemini;
+  $('imgChip').innerHTML = imgOk ? '<span class="chip ok">hazır</span>' : '<span class="chip bad">anahtar yok</span>';
+  $('dImg').className = 'dot' + (imgOk ? ' ok' : ''); $('tImg').textContent = imgOk ? state.imageProvider : 'eksik';
+  const sesOk = elOn ? state.hasKey : edgeOk; $('dSes').className = 'dot' + (sesOk ? ' ok' : ''); $('tSes').textContent = elOn ? 'ElevenLabs' : 'Edge';
+  $('sesChip').innerHTML = sesOk ? '<span class="chip ok">hazır</span>' : '<span class="chip bad">kurulum gerekli</span>';
 }
+function showSes(s) { $('edgeBox').hidden = s !== 'edge'; $('elBox').hidden = s !== 'elevenlabs'; }
+async function checkEdge() { const r = await api('/api/edge-check'); edgeOk = r.ok;
+  $('edgeChip').innerHTML = r.ok ? '<span class="chip ok">edge-tts kurulu</span>' : '<span class="chip bad">edge-tts kurulu değil</span>';
+  $('edgeHint').textContent = r.ok ? 'Anahtar gerekmez, Türkçe okur.' : 'Terminale şu komutu yapıştır, sonra "Tekrar kontrol et"e bas:'; $('edgeCmd').hidden = r.ok; await loadState(); }
+$('copyEdge').onclick = () => { navigator.clipboard?.writeText('pip3 install edge-tts'); toast('Kopyalandı'); }; $('recheck').onclick = checkEdge;
 for (const k of ['stability', 'similarity', 'style']) $(k).oninput = () => $(k + 'V').textContent = (+$(k).value).toFixed(2);
-$('saveSet').onclick = async () => {
-  await api('/api/settings', { sesSaglayici: $('sesSag').value, apiKey: $('apiKey').value, voiceId: $('voiceId').value, model: $('model').value, stability: $('stability').value, similarity: $('similarity').value, style: $('style').value });
-  $('apiKey').value = ''; await loadState(); say('setMsg', 'Kaydedildi.', 'ok');
-};
-document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  $('tabMine').hidden = b.dataset.tab !== 'mine'; $('tabTr').hidden = b.dataset.tab !== 'tr';
-});
-const voiceRow = (v, btns) => `<div class="v ${state.voiceId === v.id ? 'sel' : ''}"><div><b>${esc(v.name)}</b><small>${esc(v.labels || v.category || '')} ${v.desc ? '· ' + esc(v.desc) : ''}</small></div><div class="act">${v.preview ? `<audio controls preload="none" src="${esc(v.preview)}"></audio>` : ''}${btns}</div></div>`;
-$('loadMine').onclick = async () => {
-  say('mineMsg', 'Yükleniyor…'); const r = await api('/api/voices');
-  if (r.error) return say('mineMsg', r.status === 401 || /permission/.test(r.error) ? 'Bu anahtarın "voices_read" izni yok. ElevenLabs\'te izinleri sınırlamadan yeni anahtar oluştur ya da ses ID\'sini elle yaz.' : r.error, 'bad');
-  say('mineMsg', ''); $('mineList').innerHTML = r.voices.map(v => voiceRow(v, `<button class="sm" data-use="${esc(v.id)}">Kullan</button>` + charBtns(v.id))).join('') || 'Ses yok';
-};
-$('mineList').onclick = async e => { const id = e.target.dataset.use; if (!id) return; $('voiceId').value = id; await api('/api/settings', { voiceId: id }); await loadState(); say('setMsg', 'Ses seçildi.', 'ok'); $('loadMine').click(); };
-$('loadTr').onclick = async () => {
-  say('trMsg', 'Yükleniyor…'); const r = await api('/api/shared?q=' + encodeURIComponent($('trQ').value));
-  if (r.error) return say('trMsg', r.error, 'bad'); say('trMsg', '');
-  $('trList').innerHTML = r.voices.map(v => voiceRow(v, `<button class="sm" data-owner="${esc(v.owner)}" data-vid="${esc(v.id)}" data-name="${esc(v.name)}">Kullan</button>`)).join('') || 'Sonuç yok';
-};
-$('trList').onclick = async e => { const d = e.target.dataset; if (!d.vid) return; e.target.disabled = true;
-  const r = await api('/api/shared/add', { owner: d.owner, voiceId: d.vid, name: d.name }); e.target.disabled = false;
-  if (r.error) return say('trMsg', r.status === 402 || /paid|credit|plan/i.test(r.error) ? 'Bu ses için ücretli plan ya da kredi gerekiyor: ' + r.error : r.error, 'bad');
-  await loadState(); say('trMsg', '“' + d.name + '” hesabına eklendi ve seçildi.', 'ok'); };
+const curSeg = id => document.querySelector(`#${id} button.on`).dataset.s;
+$('saveSes').onclick = async () => { await api('/api/settings', { sesSaglayici: curSeg('sesSeg'), apiKey: $('apiKey').value, voiceId: $('voiceId').value, model: $('model').value, stability: $('stability').value, similarity: $('similarity').value, style: $('style').value }); $('apiKey').value = ''; await loadState(); toast('Ses ayarları kaydedildi'); };
+$('saveImg').onclick = async () => { const pv = curSeg('imgSeg'), k = $('imgKey').value; await api('/api/settings', { imageProvider: pv, ...(pv === 'openai' ? { openaiKey: k } : { geminiKey: k }) }); $('imgKey').value = ''; await loadState(); toast('Görsel ayarları kaydedildi'); };
 
-async function loadStories(sel) {
-  const { stories } = await api('/api/stories'); $('story').innerHTML = stories.map(s => `<option value="${esc(s.id)}">${esc(s.baslik)}</option>`).join('');
-  cur = sel || cur || (stories[0] && stories[0].id) || ''; $('story').value = cur; if (cur) loadStory();
-}
-async function loadStory() {
-  cur = $('story').value; const s = await api('/api/story?id=' + cur); if (s.error) return;
-  $('f_baslik').value = s.baslik || ''; $('f_kaynak').value = s.kaynak || ''; $('f_etiket').value = s.etiket || ''; $('f_tema').value = s.tema || 'gece';
-  $('f_metin').value = s.metin || ''; $('f_sahneler').value = JSON.stringify(s.sahneler, null, 2); window._story = s;
-}
-$('story').onchange = loadStory;
-$('saveStory').onclick = async () => {
-  let sahneler; try { sahneler = JSON.parse($('f_sahneler').value); } catch { return say('storyMsg', 'Sahneler geçerli JSON değil.', 'bad'); }
-  const s = { ...window._story, baslik: $('f_baslik').value, kaynak: $('f_kaynak').value, etiket: $('f_etiket').value, tema: $('f_tema').value, metin: $('f_metin').value, sahneler };
-  const r = await api('/api/story', { id: cur, story: s }); say('storyMsg', r.error || 'Kaydedildi.', r.error ? 'bad' : 'ok');
-};
-$('newBtn').onclick = async () => { const r = await api('/api/story/new', { baslik: $('newTitle').value }); if (r.error) return say('storyMsg', r.error, 'bad'); $('newTitle').value = ''; loadStories(r.id); };
+// ---- ElevenLabs ses listesi
+const charBtns = id => dz.bible ? Object.entries(dz.bible.karakterler).map(([k, c]) => `<button class="b g sm" data-ch="${k}" data-chv="${esc(id)}">${esc(c.ad)}</button>`).join('') : '';
+const vRow = (v, extra) => `<div class="v ${state.voiceId === v.id ? 'sel' : ''}"><div><b>${esc(v.name)}</b><br><small>${esc(v.labels || v.category || '')} ${v.desc ? '· ' + esc(v.desc) : ''}</small></div><div class="act">${v.preview ? `<audio controls preload="none" src="${esc(v.preview)}"></audio>` : ''}${extra}</div></div>`;
+$('loadMine').onclick = async () => { const r = await api('/api/voices'); if (r.error) return toast(/permission|voices_read/.test(r.error) ? 'Anahtarın "voices_read" izni yok. İzinleri sınırlamadan yeni anahtar oluştur ya da ses ID\'sini elle yaz.' : r.error, true);
+  $('voiceList').innerHTML = r.voices.map(v => vRow(v, `<button class="b sm" data-use="${esc(v.id)}">Anlatıcı</button>` + charBtns(v.id))).join('') || '<span class="hint">Ses yok</span>'; };
+$('loadTr').onclick = async () => { const r = await api('/api/shared?q=' + encodeURIComponent($('trQ').value)); if (r.error) return toast(r.error, true);
+  $('voiceList').innerHTML = r.voices.map(v => vRow(v, `<button class="b sm" data-owner="${esc(v.owner)}" data-vid="${esc(v.id)}" data-name="${esc(v.name)}">Hesabıma ekle</button>`)).join('') || '<span class="hint">Sonuç yok</span>'; };
+$('voiceList').onclick = async e => { const d = e.target.dataset;
+  if (d.use) { $('voiceId').value = d.use; await api('/api/settings', { voiceId: d.use }); await loadState(); toast('Anlatıcı sesi seçildi'); }
+  if (d.vid) { e.target.disabled = true; const r = await api('/api/shared/add', { owner: d.owner, voiceId: d.vid, name: d.name }); e.target.disabled = false;
+    if (r.error) return toast(r.status === 402 || /paid|credit|plan/i.test(r.error) ? 'Bu ses için ücretli plan ya da kredi gerekiyor.' : r.error, true); await loadState(); $('voiceId').value = r.voiceId; toast('“' + d.name + '” eklendi ve seçildi'); } };
+document.addEventListener('click', async e => { const d = e.target.dataset; if (!d.ch) return; await api('/api/dizi/bible', { karakterler: { [d.ch]: { ses: d.chv } } }); await loadDizi(); toast('Karakter sesi ayarlandı'); });
 
-let poll;
-async function start(kind) {
-  $('saveStory').click(); await new Promise(r => setTimeout(r, 250));
-  const r = await api('/api/' + kind, { id: cur, mock: $('mock').checked }); if (r.error) return say('jobMsg', r.error, 'bad');
-  $('busy').hidden = false; $('voiceBtn').disabled = $('renderBtn').disabled = true; say('jobMsg', 'Çalışıyor…');
-  clearInterval(poll); poll = setInterval(async () => {
-    const j = await api('/api/job'); say('jobMsg', j.progress || '');
-    if (j.state === 'running') return; clearInterval(poll); $('busy').hidden = true; $('voiceBtn').disabled = $('renderBtn').disabled = false;
-    if (j.state === 'error') return say('jobMsg', j.progress, 'bad');
-    const t = Date.now(); say('jobMsg', 'Hazır.', 'ok');
-    if (j.what === 'voice') { $('audio').src = `/out/${j.id}/voice.wav?t=${t}`; $('audioBox').hidden = false; $('audio').play().catch(() => {}); }
-    else { $('video').src = `/out/${j.id}/${j.id}.mp4?t=${t}`; $('dl').href = `/out/${j.id}/${j.id}.mp4`; $('dl').download = j.id + '.mp4'; $('videoBox').hidden = false; $('audio').src = `/out/${j.id}/voice.wav?t=${t}`; $('audioBox').hidden = false; }
-  }, 700);
+// ---- DİZİ: karakterler
+const EDGE_VOICES = [['tr-TR-AhmetNeural', 'Ahmet (erkek)'], ['tr-TR-EmelNeural', 'Emel (kadın)']];
+const pn = s => parseFloat(String(s || '0').replace(/[^\d.+-]/g, '')) || 0, sg = (n, u) => (n >= 0 ? '+' : '-') + Math.abs(Math.round(n)) + u;
+function renderChars() {
+  $('chars').innerHTML = Object.entries(dz.bible.karakterler).map(([k, c]) => { const e = c.edge || {};
+    return `<div class="char" style="--c:${esc(c.renk)}" data-k="${k}"><h4>${esc(c.ad)}</h4><small>${esc(c.tarif)}</small>
+    <label class="l" style="margin-top:4px">Ses (ücretsiz)</label><select data-f="ses">${EDGE_VOICES.map(v => `<option value="${v[0]}" ${e.ses === v[0] ? 'selected' : ''}>${v[1]}</option>`).join('')}</select>
+    <div class="sl"><span>Hız</span><input type="range" data-f="hiz" min="-30" max="30" step="2" value="${pn(e.hiz)}"><b>${esc(e.hiz || '+0%')}</b></div>
+    <div class="sl"><span>Ton</span><input type="range" data-f="ton" min="-40" max="50" step="2" value="${pn(e.ton)}"><b>${esc(e.ton || '+0Hz')}</b></div>
+    <div class="flex" style="margin-top:8px"><button class="b g sm" data-listen="${k}">🔊 Dinle</button>${c.ses ? '<span class="chip ok">ElevenLabs sesi seçili</span>' : ''}<audio data-au="${k}" hidden></audio></div></div>`; }).join('');
 }
-$('voiceBtn').onclick = () => start('voice'); $('renderBtn').onclick = () => start('render');
-loadState().then(() => loadStories());
+const edgeOf = el => { const q = f => el.querySelector(`[data-f=${f}]`).value; return { ses: q('ses'), hiz: sg(+q('hiz'), '%'), ton: sg(+q('ton'), 'Hz') }; };
+$('chars').addEventListener('input', e => { const el = e.target.closest('.char'); if (!el) return; const ed = edgeOf(el);
+  if (e.target.dataset.f === 'hiz') e.target.nextElementSibling.textContent = ed.hiz; if (e.target.dataset.f === 'ton') e.target.nextElementSibling.textContent = ed.ton;
+  clearTimeout(el._t); el._t = setTimeout(() => api('/api/dizi/bible', { karakterler: { [el.dataset.k]: { edge: ed } } }), 500); });
+$('chars').addEventListener('click', async e => { const k = e.target.dataset.listen; if (!k) return; const el = e.target.closest('.char'); e.target.disabled = true;
+  const r = await api('/api/dizi/onizle', { k, edge: edgeOf(el), text: 'Bak bak, bu iş tam bize göre! Ben hallederim.' }); e.target.disabled = false;
+  if (r.error) return toast(/edge-tts/.test(r.error) ? 'edge-tts kurulu değil. Kurulum sayfasındaki komutu çalıştır.' : r.error, true); const a = el.querySelector('audio'); a.src = r.url; a.play(); });
 
-// ---- Dizi
-let dz = { bible: null, bolumler: [], n: 1 };
-const epId = n => 'alsat-' + String(n).padStart(3, '0');
-async function loadDizi() {
-  dz = { ...(await api('/api/dizi')), n: dz.n }; $('imgProv').value = state.imageProvider || 'gemini';
-  $('imgKeyChip').innerHTML = (state.imageProvider === 'openai' ? state.hasOpenai : state.hasGemini) ? '<span class="chip ok">kayıtlı</span>' : '<span class="chip bad">yok</span>';
-  $('chars').innerHTML = Object.entries(dz.bible.karakterler).map(([k, c]) => `<div class="v"><div><b style="color:${esc(c.renk)}">${esc(c.ad)}</b><small>${esc(c.tarif)}</small></div><div class="act"><span class="chip ${c.ses ? 'ok' : ''}">${c.ses ? 'ses seçili' : 'ana ses'}</span></div></div>`).join('');
-  $('epSel').innerHTML = dz.bolumler.map(n => `<option value="${n}">Bölüm ${n}</option>`).join(''); dz.n = dz.bolumler.includes(dz.n) ? dz.n : dz.bolumler[0]; $('epSel').value = dz.n; loadEp();
+// ---- DİZİ: senaryo editörü
+const chOpts = sel => Object.entries(dz.bible.karakterler).map(([k, c]) => `<option value="${k}" ${sel === k ? 'selected' : ''}>${esc(c.ad)}</option>`).join('');
+function renderScenes() {
+  const S = dz.ep.sahneler; $('epTitle').value = dz.ep.baslik || '';
+  $('scenes').innerHTML = S.map((s, i) => `<div class="scene" data-i="${i}"><header><b>Sahne ${i + 1}</b>
+    <button class="x" data-a="up" title="Yukarı">↑</button><button class="x" data-a="down" title="Aşağı">↓</button><button class="x" data-a="del" title="Sil">✕</button></header>
+    <div class="row"><div><label class="l" style="margin-top:0">Mekan</label><textarea data-f="mekan" rows="2">${esc(s.mekan)}</textarea></div><div><label class="l" style="margin-top:0">Aksiyon</label><textarea data-f="aksiyon" rows="2">${esc(s.aksiyon)}</textarea></div></div>
+    <label class="l">Replikler</label>${s.satirlar.map((l, j) => `<div class="line" data-j="${j}"><select data-f="k">${chOpts(l.k)}</select><input data-f="m" value="${esc(l.m)}" placeholder="Replik…"><button class="x" data-a="dl" title="Sil">✕</button></div>`).join('')}
+    <div class="flex"><button class="b g sm" data-a="al">+ Replik</button>
+      <label class="flex hint" style="margin:0 0 0 12px"><input type="checkbox" data-f="kasaOn" ${s.kasa ? 'checked' : ''}> Kasa değişimi</label>
+      ${s.kasa ? `<input data-f="once" type="number" value="${s.kasa.once}" style="width:120px" title="Önce"><span class="hint">→</span><input data-f="sonra" type="number" value="${s.kasa.sonra}" style="width:120px" title="Sonra"><span class="hint">TL</span>` : ''}</div></div>`).join('');
+  $('epJson').value = JSON.stringify(dz.ep, null, 2);
 }
-async function loadEp() { dz.n = +$('epSel').value; const e = await api('/api/dizi/bolum?n=' + dz.n); $('epJson').value = JSON.stringify(e, null, 2); showThumbs(); }
-function showThumbs() { const t = Date.now(); $('epThumbs').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(i => `<img src="/out/${epId(dz.n)}/img-${i}.png?t=${t}" style="height:130px;border-radius:8px;border:1px solid var(--line)" onerror="this.remove()">`).join(''); }
-$('epSel').onchange = loadEp;
-$('saveImg').onclick = async () => { const k = $('imgKey').value, pv = $('imgProv').value; await api('/api/settings', { imageProvider: pv, ...(pv === 'openai' ? { openaiKey: k } : { geminiKey: k }) }); $('imgKey').value = ''; await loadState(); await loadDizi(); say('imgMsg', 'Kaydedildi.', 'ok'); };
-$('epNew').onclick = async () => { const n = Math.max(...dz.bolumler, 0) + 1, e = JSON.parse($('epJson').value || '{}'); e.baslik = 'YENİ BÖLÜM BAŞLIĞI'; const r = await api('/api/dizi/bolum', { n, ep: e }); if (r.error) return say('epMsg', r.error, 'bad'); dz.n = n; await loadDizi(); say('epMsg', `Bölüm ${n} oluşturuldu (önceki bölümün kopyası). Senaryoyu düzenle.`, 'ok'); };
-async function saveEp() { let e; try { e = JSON.parse($('epJson').value); } catch { say('epMsg', 'Senaryo geçerli JSON değil.', 'bad'); return false; } const r = await api('/api/dizi/bolum', { n: dz.n, ep: e }); if (r.error) { say('epMsg', r.error, 'bad'); return false; } return true; }
-$('epSave').onclick = async () => { if (await saveEp()) say('epMsg', 'Kaydedildi.', 'ok'); };
+let saveT; function dirty() { $('saveChip').innerHTML = '<span class="chip a">kaydediliyor…</span>'; clearTimeout(saveT); saveT = setTimeout(saveEp, 700); $('epJson').value = JSON.stringify(dz.ep, null, 2); }
+async function saveEp() { clearTimeout(saveT); const r = await api('/api/dizi/bolum', { n: dz.n, ep: dz.ep }); $('saveChip').innerHTML = r.error ? `<span class="chip bad">${esc(r.error)}</span>` : '<span class="chip ok">kaydedildi</span>'; if (!r.error) refreshStatus(); return !r.error; }
+$('epTitle').oninput = e => { dz.ep.baslik = e.target.value; dirty(); };
+$('scenes').addEventListener('input', e => { const sc = e.target.closest('.scene'); if (!sc) return; const s = dz.ep.sahneler[+sc.dataset.i], f = e.target.dataset.f, ln = e.target.closest('.line');
+  if (ln) s.satirlar[+ln.dataset.j][f] = e.target.value; else if (f === 'once' || f === 'sonra') s.kasa[f] = +e.target.value || 0; else if (f === 'mekan' || f === 'aksiyon') s[f] = e.target.value; if (f !== 'kasaOn') dirty(); });
+$('scenes').addEventListener('change', e => { const sc = e.target.closest('.scene'); if (!sc || e.target.dataset.f !== 'kasaOn') return; const s = dz.ep.sahneler[+sc.dataset.i];
+  if (e.target.checked) { const prev = dz.ep.sahneler.slice(0, +sc.dataset.i).reverse().find(x => x.kasa); const v = prev ? prev.kasa.sonra : 100000; s.kasa = { once: v, sonra: v }; } else delete s.kasa; renderScenes(); dirty(); });
+$('scenes').addEventListener('click', e => { const a = e.target.dataset.a; if (!a) return; const sc = e.target.closest('.scene'), i = +sc.dataset.i, S = dz.ep.sahneler, ln = e.target.closest('.line');
+  if (a === 'del') { if (S.length < 2) return toast('En az bir sahne olmalı', true); S.splice(i, 1); }
+  else if (a === 'up' && i > 0) [S[i - 1], S[i]] = [S[i], S[i - 1]]; else if (a === 'down' && i < S.length - 1) [S[i + 1], S[i]] = [S[i], S[i + 1]];
+  else if (a === 'al') S[i].satirlar.push({ k: S[i].satirlar.at(-1)?.k === 'bidik' ? 'zipir' : 'bidik', m: '' });
+  else if (a === 'dl') { if (S[i].satirlar.length < 2) return toast('Sahnede en az bir replik olmalı', true); S[i].satirlar.splice(+ln.dataset.j, 1); }
+  renderScenes(); dirty(); });
+$('addScene').onclick = () => { dz.ep.sahneler.push({ kimler: Object.keys(dz.bible.karakterler), mekan: 'a sunny Istanbul street', aksiyon: 'both men talking excitedly', satirlar: [{ k: 'bidik', m: '' }] }); renderScenes(); dirty(); };
+$('applyJson').onclick = () => { try { dz.ep = JSON.parse($('epJson').value); renderScenes(); dirty(); toast('JSON uygulandı'); } catch { toast('Geçerli JSON değil', true); } };
+$('epSel').onchange = () => { dz.n = +$('epSel').value; loadEp(); };
+$('epNew').onclick = async () => { const n = Math.max(...dz.bolumler, 0) + 1, e = JSON.parse(JSON.stringify(dz.ep)); e.baslik = 'YENİ BÖLÜM BAŞLIĞI'; const r = await api('/api/dizi/bolum', { n, ep: e }); if (r.error) return toast(r.error, true); dz.n = n; await loadDizi(); toast(`Bölüm ${n} oluşturuldu (öncekinin kopyası)`); };
+// kimler alanını repliklerden türet
+function fixKimler() { for (const s of dz.ep.sahneler) s.kimler = [...new Set(s.satirlar.map(l => l.k))]; }
+
+async function loadDizi() { const d = await api('/api/dizi'); dz.bible = d.bible; dz.bolumler = d.bolumler; dz.n = d.bolumler.includes(dz.n) ? dz.n : d.bolumler[0];
+  $('epSel').innerHTML = d.bolumler.map(n => `<option value="${n}">Bölüm ${n}</option>`).join(''); $('epSel').value = dz.n; renderChars(); await loadEp(); }
+async function loadEp() { dz.ep = await api('/api/dizi/bolum?n=' + dz.n); $('saveChip').innerHTML = ''; renderScenes(); refreshStatus(); }
+
+// ---- DİZİ: üretim
+const epId = () => 'alsat-' + String(dz.n).padStart(3, '0');
+async function refreshStatus() { const d = await api('/api/dizi/durum?n=' + dz.n); if (d.error) return; const have = d.gorsel.filter(Boolean).length, t = Date.now();
+  $('stG').className = 'step' + (have === d.sahne ? ' done' : ''); $('stGt').textContent = `${have}/${d.sahne} sahne hazır`;
+  $('stS').className = 'step' + (d.ses ? ' done' : ''); $('stSt').textContent = d.ses ? 'güncel' : 'üretilecek';
+  $('stV').className = 'step' + (d.video ? ' done' : ''); $('stVt').textContent = d.video ? 'hazır' : 'üretilecek';
+  $('thumbs').innerHTML = d.gorsel.map((ok, i) => ok ? `<div class="th"><img src="/out/${d.id}/img-${i + 1}.png?t=${t}"><button class="b g sm" data-re="${i + 1}">↻ Yeniden</button></div>` : '').join('');
+  if (d.video && $('epVideoBox').hidden) { $('epVid').src = `/out/${d.id}/${d.id}.mp4?t=${t}`; $('epDl').href = `/out/${d.id}/${d.id}.mp4`; $('epDl').download = d.id + '.mp4'; $('epVideoBox').hidden = false; } }
 let epPoll;
-async function epJob(kind, force) {
-  if (!(await saveEp())) return; const r = await api('/api/dizi/job', { kind, n: dz.n, mock: $('epMock').checked, force }); if (r.error) return say('epMsg', r.error, 'bad');
-  const btns = ['epImgs', 'epVoice', 'epVideo', 'epAll'].map($); btns.forEach(b => b.disabled = true); $('epBusy').hidden = false; clearInterval(epPoll);
-  epPoll = setInterval(async () => { const j = await api('/api/job'); say('epMsg', j.progress || ''); if (j.state === 'running') return; clearInterval(epPoll); btns.forEach(b => b.disabled = false); $('epBusy').hidden = true;
-    if (j.state === 'error') return say('epMsg', j.progress, 'bad'); say('epMsg', 'Hazır.', 'ok'); showThumbs();
-    if (kind === 'video' || kind === 'hepsi') { const t = Date.now(); $('epVid').src = `/out/${j.id}/${j.id}.mp4?t=${t}`; $('epDl').href = `/out/${j.id}/${j.id}.mp4`; $('epDl').download = j.id + '.mp4'; $('epVideoBox').hidden = false; } }, 800);
+async function epJob(kind, extra = {}) {
+  fixKimler(); if (!(await saveEp())) return; const r = await api('/api/dizi/job', { kind, n: dz.n, mock: $('epMock').checked, ...extra }); if (r.error) return toast(r.error, true);
+  const btns = ['epVideo', 'epImgs', 'epVoice'].map($); btns.forEach(b => b.disabled = true); $('epBusy').hidden = false; document.querySelectorAll('.step').forEach(s => s.classList.remove('run')); clearInterval(epPoll);
+  epPoll = setInterval(async () => { const j = await api('/api/job'); $('epMsg').textContent = j.progress || ''; const m = (j.progress || '').toLowerCase(); $('stG').classList.toggle('run', /sahne|referans|görsel/.test(m)); $('stS').classList.toggle('run', /satır/.test(m)); $('stV').classList.toggle('run', /kare/.test(m));
+    if (j.state === 'running') return; clearInterval(epPoll); btns.forEach(b => b.disabled = false); $('epBusy').hidden = true; document.querySelectorAll('.step').forEach(s => s.classList.remove('run'));
+    if (j.state === 'error') { $('epMsg').textContent = ''; return toast(/edge-tts/.test(j.progress) ? 'edge-tts kurulu değil. Kurulum sayfasındaki komutu çalıştır.' : j.progress, true); }
+    $('epMsg').textContent = ''; toast('Hazır'); $('epVideoBox').hidden = true; await refreshStatus(); if (kind === 'video' || kind === 'hepsi') $('epVideoBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 800);
 }
-$('epImgs').onclick = () => epJob('gorsel', true); $('epVoice').onclick = () => epJob('ses'); $('epVideo').onclick = () => epJob('video'); $('epAll').onclick = () => epJob('hepsi');
-// ses listesindeki karakter butonları
-function charBtns(id) { return dz.bible ? Object.entries(dz.bible.karakterler).map(([k, c]) => `<button class="sm ghost" data-ch="${k}" data-chv="${esc(id)}">${esc(c.ad)}</button>`).join('') : ''; }
-document.addEventListener('click', async e => { const d = e.target.dataset; if (!d.ch) return; await api('/api/dizi/bible', { karakterler: { [d.ch]: { ses: d.chv } } }); await loadDizi(); say('setMsg', 'Karakter sesi ayarlandı.', 'ok'); });
-loadState().then(loadDizi);
+$('epVideo').onclick = () => epJob('video'); $('epImgs').onclick = () => epJob('gorsel', { force: true }); $('epVoice').onclick = () => epJob('ses');
+$('thumbs').addEventListener('click', e => { const n = e.target.dataset.re; if (n) epJob('gorsel', { sahne: +n }); });
+
+// ---- TREND videoları
+let cur = '', story0 = null, poll;
+async function loadStories(sel) { const { stories } = await api('/api/stories'); $('story').innerHTML = stories.map(s => `<option value="${esc(s.id)}">${esc(s.baslik)}</option>`).join(''); cur = sel || cur || stories[0]?.id || ''; $('story').value = cur; if (cur) loadStory(); }
+async function loadStory() { cur = $('story').value; const s = await api('/api/story?id=' + cur); if (s.error) return; story0 = s;
+  $('f_baslik').value = s.baslik || ''; $('f_kaynak').value = s.kaynak || ''; $('f_etiket').value = s.etiket || ''; $('f_tema').value = s.tema || 'gece'; $('f_metin').value = s.metin || ''; $('f_sahneler').value = JSON.stringify(s.sahneler, null, 2); }
+$('story').onchange = loadStory;
+async function saveStory() { let sahneler; try { sahneler = JSON.parse($('f_sahneler').value); } catch { toast('Sahneler geçerli JSON değil', true); return false; }
+  const r = await api('/api/story', { id: cur, story: { ...story0, baslik: $('f_baslik').value, kaynak: $('f_kaynak').value, etiket: $('f_etiket').value, tema: $('f_tema').value, metin: $('f_metin').value, sahneler } }); if (r.error) { toast(r.error, true); return false; } return true; }
+$('saveStory').onclick = async () => { if (await saveStory()) toast('Kaydedildi'); };
+$('newBtn').onclick = async () => { const r = await api('/api/story/new', { baslik: $('newTitle').value }); if (r.error) return toast(r.error, true); $('newTitle').value = ''; loadStories(r.id); };
+async function start(kind) { if (!(await saveStory())) return; const r = await api('/api/' + kind, { id: cur, mock: $('mock').checked }); if (r.error) return toast(r.error, true);
+  $('busy').hidden = false; $('voiceBtn').disabled = $('renderBtn').disabled = true; clearInterval(poll);
+  poll = setInterval(async () => { const j = await api('/api/job'); $('jobMsg').textContent = j.progress || ''; if (j.state === 'running') return; clearInterval(poll); $('busy').hidden = true; $('voiceBtn').disabled = $('renderBtn').disabled = false; $('jobMsg').textContent = '';
+    if (j.state === 'error') return toast(/edge-tts/.test(j.progress) ? 'edge-tts kurulu değil. Kurulum sayfasındaki komutu çalıştır.' : j.progress, true); const t = Date.now(); toast('Hazır');
+    $('audio').src = `/out/${j.id}/voice.wav?t=${t}`; $('audioBox').hidden = false; if (j.what === 'voice') $('audio').play().catch(() => {});
+    else { $('video').src = `/out/${j.id}/${j.id}.mp4?t=${t}`; $('dl').href = `/out/${j.id}/${j.id}.mp4`; $('dl').download = j.id + '.mp4'; $('videoBox').hidden = false; } }, 700); }
+$('voiceBtn').onclick = () => start('voice'); $('renderBtn').onclick = () => start('render');
+
+(async () => { await loadState(); await checkEdge(); await loadDizi(); await loadStories(); })();
 </script></body></html>

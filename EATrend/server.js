@@ -1,5 +1,6 @@
 // EATrend Stüdyo: yerel web arayüzü. Sadece bu bilgisayardan erişilir (127.0.0.1).
-const http = require('http'), fs = require('fs'), path = require('path'), { spawn } = require('child_process');
+const http = require('http'), fs = require('fs'), path = require('path'), { spawn, spawnSync } = require('child_process');
+const { edgeSpeak } = require('./lib');
 const ROOT = __dirname, PORT = +process.env.PORT || 3000, ENVF = path.join(ROOT, '.env');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.mp4': 'video/mp4', '.wav': 'audio/wav', '.png': 'image/png' };
 const idOk = s => typeof s === 'string' && /^[a-z0-9-]{1,60}$/.test(s);
@@ -55,14 +56,25 @@ const routes = {
   'POST /api/render': async (req, res, b) => idOk(b.id) && runJob('render', b.id, ['make.js', b.id, ...(b.mock ? ['--mock'] : [])]) ? { ok: true } : { error: 'Başka bir iş sürüyor ya da geçersiz hikaye' },
   'GET /api/dizi': async () => { const d = path.join(ROOT, 'content/series/alsat'); return { bible: JSON.parse(fs.readFileSync(path.join(d, 'bible.json'), 'utf8')), bolumler: fs.readdirSync(d).filter(f => /^\d+\.json$/.test(f)).map(f => +f.slice(0, -5)).sort((a, b) => a - b) }; },
   'POST /api/dizi/bible': async (req, res, b) => { const f = path.join(ROOT, 'content/series/alsat/bible.json'), cur = JSON.parse(fs.readFileSync(f, 'utf8'));
-    for (const [k, v] of Object.entries(b.karakterler || {})) if (cur.karakterler[k]) { if (typeof v.ses === 'string' && /^[\w-]*$/.test(v.ses)) cur.karakterler[k].ses = v.ses; if (typeof v.tarif === 'string') cur.karakterler[k].tarif = v.tarif.slice(0, 600); }
+    for (const [k, v] of Object.entries(b.karakterler || {})) if (cur.karakterler[k]) { if (typeof v.ses === 'string' && /^[\w-]*$/.test(v.ses)) cur.karakterler[k].ses = v.ses; if (typeof v.tarif === 'string') cur.karakterler[k].tarif = v.tarif.slice(0, 600);
+      if (v.edge) { const e = cur.karakterler[k].edge = cur.karakterler[k].edge || {}; if (/^[\w-]+$/.test(v.edge.ses || '')) e.ses = v.edge.ses; if (/^[+-]\d{1,3}%$/.test(v.edge.hiz || '')) e.hiz = v.edge.hiz; if (/^[+-]\d{1,3}Hz$/.test(v.edge.ton || '')) e.ton = v.edge.ton; } }
     if (typeof b.stil === 'string') cur.stil = b.stil.slice(0, 800); fs.writeFileSync(f, JSON.stringify(cur, null, 2)); return { ok: true }; },
   'GET /api/dizi/bolum': async (req, res, b, q) => { const f = path.join(ROOT, 'content/series/alsat', String(+q.n).padStart(3, '0') + '.json'); return +q.n > 0 && fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : { error: 'Bölüm yok' }; },
   'POST /api/dizi/bolum': async (req, res, b) => { const n = +b.n; if (!(n > 0 && n < 1000) || !b.ep || !Array.isArray(b.ep.sahneler) || !b.ep.sahneler.length || !b.ep.sahneler.every(x => Array.isArray(x.satirlar) && x.satirlar.length && typeof x.mekan === 'string' && Array.isArray(x.kimler))) return { error: 'Geçersiz bölüm' };
     b.ep.dizi = 'alsat'; b.ep.bolum = n; fs.writeFileSync(path.join(ROOT, 'content/series/alsat', String(n).padStart(3, '0') + '.json'), JSON.stringify(b.ep, null, 2)); return { ok: true }; },
   'POST /api/dizi/job': async (req, res, b) => { const n = +b.n, m = b.mock ? ['--mock'] : []; if (!(n > 0 && n < 1000)) return { error: 'Geçersiz bölüm' };
-    const cmd = { gorsel: ['dizi/gorsel.js', 'alsat', n, ...m, ...(b.force ? ['--force'] : [])], ses: ['dizi/ses.js', 'alsat', n, ...m], video: ['render/render-dizi.js', 'alsat', n], hepsi: ['make-dizi.js', 'alsat', n, ...m] }[b.kind];
+    const cmd = { gorsel: ['dizi/gorsel.js', 'alsat', n, ...m, ...(b.sahne > 0 ? ['--sahne', +b.sahne, '--force'] : b.force ? ['--force'] : [])], ses: ['dizi/ses.js', 'alsat', n, ...m], video: ['make-dizi.js', 'alsat', n, ...m, '--eksik'], hepsi: ['make-dizi.js', 'alsat', n, ...m] }[b.kind];
     if (!cmd) return { error: 'Geçersiz iş' }; return runJob('dizi-' + b.kind, 'alsat-' + String(n).padStart(3, '0'), cmd.map(String)) ? { ok: true } : { error: 'Başka bir iş sürüyor' }; },
+  'GET /api/edge-check': async () => { const r = spawnSync('python3', ['-c', 'import edge_tts']); return { ok: r.status === 0 }; },
+  'GET /api/dizi/durum': async (req, res, b, q) => { const n = +q.n, f = path.join(ROOT, 'content/series/alsat', String(n).padStart(3, '0') + '.json'); if (!(n > 0) || !fs.existsSync(f)) return { error: 'Bölüm yok' };
+    const ep = JSON.parse(fs.readFileSync(f, 'utf8')), id = 'alsat-' + String(n).padStart(3, '0'), dir = path.join(ROOT, 'out', id), mt = x => fs.existsSync(x) ? fs.statSync(x).mtimeMs : 0;
+    const gorsel = ep.sahneler.map((_, i) => fs.existsSync(path.join(dir, `img-${i + 1}.png`))), tl = mt(path.join(dir, 'timeline.json')), vid = mt(path.join(dir, id + '.mp4'));
+    return { id, sahne: ep.sahneler.length, gorsel, ses: tl > mt(f), video: vid > tl && tl > 0 }; },
+  'POST /api/dizi/onizle': async (req, res, b) => { let bb; try { bb = JSON.parse(fs.readFileSync(path.join(ROOT, 'content/series/alsat/bible.json'), 'utf8')); } catch { return { error: 'bible okunamadı' }; }
+    const ch = bb.karakterler[b.k]; if (!ch) return { error: 'Bilinmeyen karakter' }; const e = { ...(ch.edge || {}), ...(b.edge || {}) };
+    if (!/^[\w-]+$/.test(e.ses || 'x') || !/^[+-]\d{1,3}%$/.test(e.hiz || '+0%') || !/^[+-]\d{1,3}Hz$/.test(e.ton || '+0Hz')) return { error: 'Geçersiz ayar' };
+    const d = path.join(ROOT, 'out', 'onizleme'); fs.mkdirSync(d, { recursive: true }); const f = path.join(d, b.k + '.mp3');
+    try { edgeSpeak(String(b.text || 'Bak bak, bu iş bende!').slice(0, 200), e, f); } catch (err) { return { error: String(err.message || err) }; } return { url: `/out/onizleme/${b.k}.mp3?t=${Date.now()}` }; },
   'GET /api/job': async () => ({ state: job.state, what: job.what, id: job.id, progress: job.progress })
 };
 

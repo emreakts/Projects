@@ -4,7 +4,9 @@ const { ROOT, bible, episode, episodeId, outDir, requirePlaywright } = require('
 const FPS = 30;
 (async () => {
   const [dizi, n] = process.argv.slice(2); if (!dizi || !n) { console.error('kullanım: node render/render-dizi.js <dizi> <bölüm>'); process.exit(1); }
-  const id = episodeId(dizi, n), dir = outDir(id), ep = episode(dizi, n), tl = JSON.parse(fs.readFileSync(path.join(dir, 'timeline.json'), 'utf8'));
+  const id = episodeId(dizi, n), dir = outDir(id), ep = episode(dizi, n);
+  if (!fs.existsSync(path.join(dir, 'timeline.json'))) { console.error('Önce sesleri üret.'); process.exit(1); }
+  const tl = JSON.parse(fs.readFileSync(path.join(dir, 'timeline.json'), 'utf8'));
   const urls = ep.sahneler.map((_, i) => 'file://' + path.join(dir, `img-${i + 1}.png`));
   const missing = urls.filter(u => !fs.existsSync(u.slice(7))); if (missing.length) { console.error('Eksik görsel var, önce görselleri üret.'); process.exit(1); }
   const { chromium } = requirePlaywright(); const browser = await chromium.launch(), page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
