@@ -34,7 +34,10 @@ async function elevenlabs(text) {
   if (!key || !voice) throw new Error('ELEVENLABS_API_KEY ve ELEVENLABS_VOICE_ID gerekli (.env) ya da --mock kullan');
   const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}/with-timestamps`, {
     method: 'POST', headers: { 'xi-api-key': key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, model_id: process.env.ELEVENLABS_MODEL || 'eleven_v3' })
+    body: JSON.stringify({
+      text, model_id: process.env.ELEVENLABS_MODEL || 'eleven_v3',
+      voice_settings: { stability: +(process.env.VOICE_STABILITY ?? 0.5), similarity_boost: +(process.env.VOICE_SIMILARITY ?? 0.8), style: +(process.env.VOICE_STYLE ?? 0.25), use_speaker_boost: true }
+    })
   });
   if (!r.ok) throw new Error('ElevenLabs ' + r.status + ': ' + (await r.text()).slice(0, 300));
   const j = await r.json();
