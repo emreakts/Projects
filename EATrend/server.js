@@ -30,8 +30,8 @@ function runJob(what, id, args) {
 }
 
 const routes = {
-  'GET /api/state': async () => { const e = readEnv(); return { hasKey: !!e.ELEVENLABS_API_KEY, keyHint: e.ELEVENLABS_API_KEY ? '…' + e.ELEVENLABS_API_KEY.slice(-4) : '', voiceId: e.ELEVENLABS_VOICE_ID || '', model: e.ELEVENLABS_MODEL || 'eleven_v3', stability: +(e.VOICE_STABILITY ?? 0.5), similarity: +(e.VOICE_SIMILARITY ?? 0.8), style: +(e.VOICE_STYLE ?? 0.25) }; },
-  'POST /api/settings': async (req, res, b) => { const p = {}; if (b.apiKey) p.ELEVENLABS_API_KEY = String(b.apiKey).trim();
+  'GET /api/state': async () => { const e = readEnv(); return { hasKey: !!e.ELEVENLABS_API_KEY, keyHint: e.ELEVENLABS_API_KEY ? '…' + e.ELEVENLABS_API_KEY.slice(-4) : '', voiceId: e.ELEVENLABS_VOICE_ID || '', hasGemini: !!e.GEMINI_API_KEY, hasOpenai: !!e.OPENAI_API_KEY, imageProvider: e.IMAGE_PROVIDER || 'gemini', model: e.ELEVENLABS_MODEL || 'eleven_v3', stability: +(e.VOICE_STABILITY ?? 0.5), similarity: +(e.VOICE_SIMILARITY ?? 0.8), style: +(e.VOICE_STYLE ?? 0.25) }; },
+  'POST /api/settings': async (req, res, b) => { const p = {}; if (b.apiKey) p.ELEVENLABS_API_KEY = String(b.apiKey).trim(); if (b.geminiKey) p.GEMINI_API_KEY = String(b.geminiKey).trim(); if (b.openaiKey) p.OPENAI_API_KEY = String(b.openaiKey).trim(); if (b.imageProvider) p.IMAGE_PROVIDER = b.imageProvider === 'openai' ? 'openai' : 'gemini';
     for (const [k, e] of [['voiceId', 'ELEVENLABS_VOICE_ID'], ['model', 'ELEVENLABS_MODEL'], ['stability', 'VOICE_STABILITY'], ['similarity', 'VOICE_SIMILARITY'], ['style', 'VOICE_STYLE']]) if (b[k] !== undefined && b[k] !== '') p[e] = String(b[k]).trim();
     writeEnv(p); return { ok: true }; },
   'GET /api/voices': async () => { const r = await el('/v1/voices'); if (r.status !== 200) return { error: errMsg(r.json), status: r.status };
@@ -53,6 +53,16 @@ const routes = {
     fs.writeFileSync(storyFile(id), JSON.stringify(s, null, 2)); return { ok: true, id }; },
   'POST /api/voice': async (req, res, b) => idOk(b.id) && runJob('voice', b.id, ['voice/tts.js', b.id, ...(b.mock ? ['--mock'] : [])]) ? { ok: true } : { error: 'Başka bir iş sürüyor ya da geçersiz hikaye' },
   'POST /api/render': async (req, res, b) => idOk(b.id) && runJob('render', b.id, ['make.js', b.id, ...(b.mock ? ['--mock'] : [])]) ? { ok: true } : { error: 'Başka bir iş sürüyor ya da geçersiz hikaye' },
+  'GET /api/dizi': async () => { const d = path.join(ROOT, 'content/series/alsat'); return { bible: JSON.parse(fs.readFileSync(path.join(d, 'bible.json'), 'utf8')), bolumler: fs.readdirSync(d).filter(f => /^\d+\.json$/.test(f)).map(f => +f.slice(0, -5)).sort((a, b) => a - b) }; },
+  'POST /api/dizi/bible': async (req, res, b) => { const f = path.join(ROOT, 'content/series/alsat/bible.json'), cur = JSON.parse(fs.readFileSync(f, 'utf8'));
+    for (const [k, v] of Object.entries(b.karakterler || {})) if (cur.karakterler[k]) { if (typeof v.ses === 'string' && /^[\w-]*$/.test(v.ses)) cur.karakterler[k].ses = v.ses; if (typeof v.tarif === 'string') cur.karakterler[k].tarif = v.tarif.slice(0, 600); }
+    if (typeof b.stil === 'string') cur.stil = b.stil.slice(0, 800); fs.writeFileSync(f, JSON.stringify(cur, null, 2)); return { ok: true }; },
+  'GET /api/dizi/bolum': async (req, res, b, q) => { const f = path.join(ROOT, 'content/series/alsat', String(+q.n).padStart(3, '0') + '.json'); return +q.n > 0 && fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : { error: 'Bölüm yok' }; },
+  'POST /api/dizi/bolum': async (req, res, b) => { const n = +b.n; if (!(n > 0 && n < 1000) || !b.ep || !Array.isArray(b.ep.sahneler) || !b.ep.sahneler.length || !b.ep.sahneler.every(x => Array.isArray(x.satirlar) && x.satirlar.length && typeof x.mekan === 'string' && Array.isArray(x.kimler))) return { error: 'Geçersiz bölüm' };
+    b.ep.dizi = 'alsat'; b.ep.bolum = n; fs.writeFileSync(path.join(ROOT, 'content/series/alsat', String(n).padStart(3, '0') + '.json'), JSON.stringify(b.ep, null, 2)); return { ok: true }; },
+  'POST /api/dizi/job': async (req, res, b) => { const n = +b.n, m = b.mock ? ['--mock'] : []; if (!(n > 0 && n < 1000)) return { error: 'Geçersiz bölüm' };
+    const cmd = { gorsel: ['dizi/gorsel.js', 'alsat', n, ...m, ...(b.force ? ['--force'] : [])], ses: ['dizi/ses.js', 'alsat', n, ...m], video: ['render/render-dizi.js', 'alsat', n], hepsi: ['make-dizi.js', 'alsat', n, ...m] }[b.kind];
+    if (!cmd) return { error: 'Geçersiz iş' }; return runJob('dizi-' + b.kind, 'alsat-' + String(n).padStart(3, '0'), cmd.map(String)) ? { ok: true } : { error: 'Başka bir iş sürüyor' }; },
   'GET /api/job': async () => ({ state: job.state, what: job.what, id: job.id, progress: job.progress })
 };
 

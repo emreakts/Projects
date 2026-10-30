@@ -1,0 +1,58 @@
+{
+  "dizi": "alsat",
+  "bolum": 1,
+  "baslik": "ESKİ SCOOTER'I ALDIK, KOMŞUYU ŞAŞIRTTIK!",
+  "sahneler": [
+    {
+      "kimler": ["bidik", "zipir"],
+      "mekan": "a narrow sunny Istanbul side street, a tea house in the background, a rusty old scooter parked at the curb",
+      "aksiyon": "both men crouching and inspecting the scooter, Bıdık thrilled, Zıpır doubtful",
+      "satirlar": [
+        { "k": "bidik", "m": "[heyecanlı] Zıpır, bak bak! Bu scooter tam bize göre!" },
+        { "k": "zipir", "m": "[şüpheli] Bıdık, bunun farı bile yok." }
+      ],
+      "kasa": { "once": 100000, "sonra": 100000 }
+    },
+    {
+      "kimler": ["bidik", "zipir"],
+      "mekan": "the same street, a grumpy old neighbor in a vest holding a tea glass beside the scooter",
+      "aksiyon": "Bıdık haggling with the old neighbor, Zıpır holding the cash envelope nervously",
+      "satirlar": [
+        { "k": "bidik", "m": "Amca, kırk bin verelim, hemen alalım." },
+        { "k": "zipir", "m": "[fısıltıyla] Bıdık, kasada o kadar yok!" },
+        { "k": "bidik", "m": "[kendinden emin] Sen karışma, ben hallederim." }
+      ],
+      "kasa": { "once": 100000, "sonra": 60000 }
+    },
+    {
+      "kimler": ["bidik", "zipir"],
+      "mekan": "a small messy garage with tools on the wall and a shiny repaired scooter in the middle",
+      "aksiyon": "both men covered in grease, proudly showing the repaired scooter, Zıpır wiping his glasses",
+      "satirlar": [
+        { "k": "zipir", "m": "[şaşkın] Çalıştı! Gerçekten çalıştı!" },
+        { "k": "bidik", "m": "[gülerek] Ben demedim mi? Bu iş bende." }
+      ],
+      "kasa": { "once": 60000, "sonra": 55000 }
+    },
+    {
+      "kimler": ["bidik", "zipir"],
+      "mekan": "a sunny Istanbul waterfront promenade, a young buyer in a hoodie handing over cash",
+      "aksiyon": "Bıdık shaking hands with the buyer, Zıpır counting the money with wide eyes",
+      "satirlar": [
+        { "k": "bidik", "m": "Elli sekiz bin, söz verdik, bitti!" },
+        { "k": "zipir", "m": "[coşkulu] Yüz on üç bin! Kasa doldu!" }
+      ],
+      "kasa": { "once": 55000, "sonra": 113000 }
+    },
+    {
+      "kimler": ["bidik", "zipir"],
+      "mekan": "Istanbul at sunset with the Bosphorus behind, a vintage minibus parked nearby",
+      "aksiyon": "both men looking at the minibus with big eyes, Bıdık pointing, Zıpır covering his face",
+      "satirlar": [
+        { "k": "bidik", "m": "[heyecanlı] Zıpır, sıradaki iş bu minibüs!" },
+        { "k": "zipir", "m": "[bıkkın] Yine mi Bıdık? Yine mi?" }
+      ],
+      "kasa": { "once": 113000, "sonra": 113000 }
+    }
+  ]
+}

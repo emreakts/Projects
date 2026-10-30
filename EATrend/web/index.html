@@ -84,6 +84,31 @@ details summary{cursor:pointer;color:var(--mute);margin-top:12px}
   <div class="out"><div id="audioBox" hidden><label>Ses</label><audio id="audio" controls></audio></div>
     <div id="videoBox" hidden><label>Video</label><video id="video" controls></video><div style="margin-top:8px"><a id="dl" download><button class="ghost sm" type="button">⬇ Videoyu indir</button></a></div></div></div>
 </section>
+
+<section id="s4">
+  <h2>4. Dizi: Bıdık ile Zıpır Al-Sat <small>komik yapay zekâ serisi</small></h2>
+  <p class="hint">İki özgün karakter, her biri kendi sesiyle konuşur. Görseller yapay zekâ API'siyle üretilir (her görsel küçük bir ücret demektir). Kurgusal bir dizidir, gerçek kişi ve olay yoktur.</p>
+  <div class="row"><div><label>Görsel üretim servisi</label><select id="imgProv"><option value="gemini">Gemini (Google)</option><option value="openai">OpenAI</option></select></div>
+    <div><label>API anahtarı <span id="imgKeyChip"></span></label><input id="imgKey" type="password" placeholder="Anahtarı yapıştır, Kaydet'e bas" autocomplete="off"></div></div>
+  <div style="margin-top:10px"><button class="ghost" id="saveImg">Görsel ayarlarını kaydet</button> <span class="msg" id="imgMsg"></span></div>
+
+  <label>Karakter sesleri</label>
+  <div id="chars"></div>
+  <p class="hint">Ses seçmek için yukarıdaki ses listesinde sesin yanındaki <b>Bıdık</b> ya da <b>Zıpır</b> butonuna bas. Boş bırakılırsa ana ses kullanılır.</p>
+
+  <div class="row"><div><label>Bölüm</label><select id="epSel"></select></div>
+    <div style="align-self:end"><button class="ghost" id="epNew">+ Yeni bölüm</button></div></div>
+  <label>Bölüm senaryosu (JSON)</label><textarea class="code" id="epJson" style="min-height:260px"></textarea>
+  <p class="hint">Her sahnede: <code>kimler</code>, <code>mekan</code>, <code>aksiyon</code>, <code>satirlar</code> (k: bidik/zipir, m: replik) ve istersen <code>kasa</code> (önce/sonra).</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+    <button class="ghost" id="epSave">Bölümü kaydet</button>
+    <button id="epImgs">🖼 Görselleri üret</button><button id="epVoice">🔊 Sesleri üret</button><button id="epVideo">🎬 Videoyu oluştur</button><button class="ghost" id="epAll">Hepsini yap</button>
+  </div>
+  <label style="display:flex;gap:8px;align-items:center;text-transform:none;font-size:14px;color:var(--ink)"><input type="checkbox" id="epMock" style="width:auto"> Sahte görsel ve ses (ücretsiz test)</label>
+  <div id="epBusy" hidden><div class="bar"><i></i></div></div><div class="msg" id="epMsg"></div>
+  <div id="epThumbs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"></div>
+  <div class="out"><div id="epVideoBox" hidden><label>Video</label><video id="epVid" controls></video><div style="margin-top:8px"><a id="epDl" download><button class="ghost sm" type="button">⬇ Videoyu indir</button></a></div></div></div>
+</section>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -111,7 +136,7 @@ const voiceRow = (v, btns) => `<div class="v ${state.voiceId === v.id ? 'sel' : 
 $('loadMine').onclick = async () => {
   say('mineMsg', 'Yükleniyor…'); const r = await api('/api/voices');
   if (r.error) return say('mineMsg', r.status === 401 || /permission/.test(r.error) ? 'Bu anahtarın "voices_read" izni yok. ElevenLabs\'te izinleri sınırlamadan yeni anahtar oluştur ya da ses ID\'sini elle yaz.' : r.error, 'bad');
-  say('mineMsg', ''); $('mineList').innerHTML = r.voices.map(v => voiceRow(v, `<button class="sm" data-use="${esc(v.id)}">Kullan</button>`)).join('') || 'Ses yok';
+  say('mineMsg', ''); $('mineList').innerHTML = r.voices.map(v => voiceRow(v, `<button class="sm" data-use="${esc(v.id)}">Kullan</button>` + charBtns(v.id))).join('') || 'Ses yok';
 };
 $('mineList').onclick = async e => { const id = e.target.dataset.use; if (!id) return; $('voiceId').value = id; await api('/api/settings', { voiceId: id }); await loadState(); say('setMsg', 'Ses seçildi.', 'ok'); $('loadMine').click(); };
 $('loadTr').onclick = async () => {
@@ -157,4 +182,34 @@ async function start(kind) {
 }
 $('voiceBtn').onclick = () => start('voice'); $('renderBtn').onclick = () => start('render');
 loadState().then(() => loadStories());
+
+// ---- Dizi
+let dz = { bible: null, bolumler: [], n: 1 };
+const epId = n => 'alsat-' + String(n).padStart(3, '0');
+async function loadDizi() {
+  dz = { ...(await api('/api/dizi')), n: dz.n }; $('imgProv').value = state.imageProvider || 'gemini';
+  $('imgKeyChip').innerHTML = (state.imageProvider === 'openai' ? state.hasOpenai : state.hasGemini) ? '<span class="chip ok">kayıtlı</span>' : '<span class="chip bad">yok</span>';
+  $('chars').innerHTML = Object.entries(dz.bible.karakterler).map(([k, c]) => `<div class="v"><div><b style="color:${esc(c.renk)}">${esc(c.ad)}</b><small>${esc(c.tarif)}</small></div><div class="act"><span class="chip ${c.ses ? 'ok' : ''}">${c.ses ? 'ses seçili' : 'ana ses'}</span></div></div>`).join('');
+  $('epSel').innerHTML = dz.bolumler.map(n => `<option value="${n}">Bölüm ${n}</option>`).join(''); dz.n = dz.bolumler.includes(dz.n) ? dz.n : dz.bolumler[0]; $('epSel').value = dz.n; loadEp();
+}
+async function loadEp() { dz.n = +$('epSel').value; const e = await api('/api/dizi/bolum?n=' + dz.n); $('epJson').value = JSON.stringify(e, null, 2); showThumbs(); }
+function showThumbs() { const t = Date.now(); $('epThumbs').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(i => `<img src="/out/${epId(dz.n)}/img-${i}.png?t=${t}" style="height:130px;border-radius:8px;border:1px solid var(--line)" onerror="this.remove()">`).join(''); }
+$('epSel').onchange = loadEp;
+$('saveImg').onclick = async () => { const k = $('imgKey').value, pv = $('imgProv').value; await api('/api/settings', { imageProvider: pv, ...(pv === 'openai' ? { openaiKey: k } : { geminiKey: k }) }); $('imgKey').value = ''; await loadState(); await loadDizi(); say('imgMsg', 'Kaydedildi.', 'ok'); };
+$('epNew').onclick = async () => { const n = Math.max(...dz.bolumler, 0) + 1, e = JSON.parse($('epJson').value || '{}'); e.baslik = 'YENİ BÖLÜM BAŞLIĞI'; const r = await api('/api/dizi/bolum', { n, ep: e }); if (r.error) return say('epMsg', r.error, 'bad'); dz.n = n; await loadDizi(); say('epMsg', `Bölüm ${n} oluşturuldu (önceki bölümün kopyası). Senaryoyu düzenle.`, 'ok'); };
+async function saveEp() { let e; try { e = JSON.parse($('epJson').value); } catch { say('epMsg', 'Senaryo geçerli JSON değil.', 'bad'); return false; } const r = await api('/api/dizi/bolum', { n: dz.n, ep: e }); if (r.error) { say('epMsg', r.error, 'bad'); return false; } return true; }
+$('epSave').onclick = async () => { if (await saveEp()) say('epMsg', 'Kaydedildi.', 'ok'); };
+let epPoll;
+async function epJob(kind, force) {
+  if (!(await saveEp())) return; const r = await api('/api/dizi/job', { kind, n: dz.n, mock: $('epMock').checked, force }); if (r.error) return say('epMsg', r.error, 'bad');
+  const btns = ['epImgs', 'epVoice', 'epVideo', 'epAll'].map($); btns.forEach(b => b.disabled = true); $('epBusy').hidden = false; clearInterval(epPoll);
+  epPoll = setInterval(async () => { const j = await api('/api/job'); say('epMsg', j.progress || ''); if (j.state === 'running') return; clearInterval(epPoll); btns.forEach(b => b.disabled = false); $('epBusy').hidden = true;
+    if (j.state === 'error') return say('epMsg', j.progress, 'bad'); say('epMsg', 'Hazır.', 'ok'); showThumbs();
+    if (kind === 'video' || kind === 'hepsi') { const t = Date.now(); $('epVid').src = `/out/${j.id}/${j.id}.mp4?t=${t}`; $('epDl').href = `/out/${j.id}/${j.id}.mp4`; $('epDl').download = j.id + '.mp4'; $('epVideoBox').hidden = false; } }, 800);
+}
+$('epImgs').onclick = () => epJob('gorsel', true); $('epVoice').onclick = () => epJob('ses'); $('epVideo').onclick = () => epJob('video'); $('epAll').onclick = () => epJob('hepsi');
+// ses listesindeki karakter butonları
+function charBtns(id) { return dz.bible ? Object.entries(dz.bible.karakterler).map(([k, c]) => `<button class="sm ghost" data-ch="${k}" data-chv="${esc(id)}">${esc(c.ad)}</button>`).join('') : ''; }
+document.addEventListener('click', async e => { const d = e.target.dataset; if (!d.ch) return; await api('/api/dizi/bible', { karakterler: { [d.ch]: { ses: d.chv } } }); await loadDizi(); say('setMsg', 'Karakter sesi ayarlandı.', 'ok'); });
+loadState().then(loadDizi);
 </script></body></html>

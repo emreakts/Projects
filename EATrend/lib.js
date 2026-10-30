@@ -14,3 +14,11 @@ function requirePlaywright() {
   return require(path.join(g, 'playwright'));
 }
 module.exports = { ROOT, loadEnv, story, outDir, requirePlaywright };
+
+// --- Dizi (al-sat) yardımcıları
+const SERIES = path.join(ROOT, 'content/series');
+function bible(dizi) { return JSON.parse(fs.readFileSync(path.join(SERIES, dizi, 'bible.json'), 'utf8')); }
+function episodeFile(dizi, n) { return path.join(SERIES, dizi, String(n).padStart(3, '0') + '.json'); }
+function episode(dizi, n) { return JSON.parse(fs.readFileSync(episodeFile(dizi, n), 'utf8')); }
+function episodeId(dizi, n) { return dizi + '-' + String(n).padStart(3, '0'); }
+module.exports = { ...module.exports, bible, episode, episodeFile, episodeId, SERIES };
