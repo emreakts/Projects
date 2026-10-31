@@ -40,3 +40,13 @@ node make.js kisa-video-beyni          # gerçek ElevenLabs sesi
 Ses kaynağı varsayılan olarak Microsoft Edge'in ücretsiz Türkçe sesleridir (anahtar gerekmez). Kurulum: `pip3 install edge-tts`.
 Karakterlerin sesleri `content/series/alsat/bible.json` içinde `edge` alanındadır (ses, hız, ton). Duygu etiketleri hız/ton ayarına çevrilir.
 ElevenLabs'e geçmek için Stüdyo'da "Ses kaynağı"nı değiştir ya da `.env`'e `SES_SAGLAYICI=elevenlabs` yaz.
+
+## Otomatik web uygulaması
+
+`baslat.command` (ya da `npm start`) → `http://localhost:3000`
+
+- **Panel:** durum, otomatik pilot, üretim hattı, planlı yayınlar.
+- **Onay merkezi:** hazır bölümleri izle, başlık/açıklama/saati düzenle, onayla ya da reddet (geri bildirimle yeniden yazdır).
+- **Otomasyon:** Gemini ile senaryo → görsel → ses → video. Tampon kadar bölüm hazırlar, onayladıkların YouTube'a gizli yüklenir ve `publishAt` ile planlanan saatte yayınlanır.
+- **Güvenlik kuralları:** sahte (demo) görselli bölüm yayınlanamaz; sahte görseller gerçek üretimde asla yeniden kullanılmaz; her açıklamaya "yapay zekâ ile üretilmiştir" notu eklenir.
+- Veriler `data/db.json` içinde (gitignore'da). Manuel düzenleme için `/web/studyo.html`.

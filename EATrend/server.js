@@ -1,6 +1,8 @@
 // EATrend Stüdyo: yerel web arayüzü. Sadece bu bilgisayardan erişilir (127.0.0.1).
 const http = require('http'), fs = require('fs'), path = require('path'), { spawn, spawnSync } = require('child_process');
 const { edgeSpeak } = require('./lib');
+const PORT_FOR_ROUTES = +process.env.PORT || 3000;
+const appRoutes = require('./core/routes')(PORT_FOR_ROUTES), worker = require('./core/worker');
 const ROOT = __dirname, PORT = +process.env.PORT || 3000, ENVF = path.join(ROOT, '.env');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.mp4': 'video/mp4', '.wav': 'audio/wav', '.png': 'image/png' };
 const idOk = s => typeof s === 'string' && /^[a-z0-9-]{1,60}$/.test(s);
@@ -81,7 +83,9 @@ const routes = {
 http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x'), key = req.method + ' ' + u.pathname;
   try {
-    if (routes[key]) { const b = req.method === 'POST' ? await readBody(req) : {}; return send(res, 200, await routes[key](req, res, b, Object.fromEntries(u.searchParams))); }
+    const h = routes[key] || appRoutes[key];
+    if (h) { const b = req.method === 'POST' ? await readBody(req) : {}; let out; try { out = await h(req, res, b, Object.fromEntries(u.searchParams)); } catch (e) { return send(res, 200, { error: String(e.message || e) }); }
+      if (out && out.__redirect) { res.writeHead(302, { Location: out.__redirect }); return res.end(); } if (out && out.__html) return send(res, 200, out.__html, 'text/html; charset=utf-8'); return send(res, 200, out); }
     let rel = u.pathname === '/' ? '/web/index.html' : u.pathname;
     if (!/^\/(web|out)\//.test(rel)) return send(res, 404, 'yok', 'text/plain');
     const f = path.normalize(path.join(ROOT, rel)); if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return send(res, 404, 'yok', 'text/plain');
@@ -90,4 +94,4 @@ http.createServer(async (req, res) => {
       res.writeHead(206, { 'Content-Type': type, 'Content-Range': `bytes ${a}-${z}/${stat.size}`, 'Accept-Ranges': 'bytes', 'Content-Length': z - a + 1 }); return fs.createReadStream(f, { start: a, end: z }).pipe(res); }
     res.writeHead(200, { 'Content-Type': type, 'Content-Length': stat.size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-store' }); fs.createReadStream(f).pipe(res);
   } catch (e) { send(res, 500, { error: String(e.message || e) }); }
-}).listen(PORT, '127.0.0.1', () => console.log(`\nEATrend Stüdyo hazır: http://localhost:${PORT}\n(kapatmak için bu pencerede Ctrl+C)`));
+}).listen(PORT, '127.0.0.1', () => { worker.start({ job }); console.log(`\nEATrend Stüdyo hazır: http://localhost:${PORT}\n(kapatmak için bu pencerede Ctrl+C)`); });

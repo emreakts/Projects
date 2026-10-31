@@ -45,10 +45,10 @@ async function mockImages(items) {
   const [dizi, n] = process.argv.slice(2), mock = process.argv.includes('--mock') || process.argv.includes('--mock-gorsel'), force = process.argv.includes('--force');
   const only = process.argv.includes('--sahne') ? +process.argv[process.argv.indexOf('--sahne') + 1] - 1 : null;
   if (!dizi || !n) { console.error('kullanım: node dizi/gorsel.js <dizi> <bölüm> [--mock] [--force] [--sahne N]'); process.exit(1); }
-  const b = bible(dizi), ep = episode(dizi, n), dir = outDir(episodeId(dizi, n));
-  const todo = ep.sahneler.map((s, i) => ({ i, s, file: path.join(dir, `img-${i + 1}.png`) })).filter(x => (only === null || only === x.i) && (force || !fs.existsSync(x.file)));
+  const b = bible(dizi), ep = episode(dizi, n), dir = outDir(episodeId(dizi, n)), flag = path.join(dir, 'mock.flag'), wasMock = fs.existsSync(flag);
+  const todo = ep.sahneler.map((s, i) => ({ i, s, file: path.join(dir, `img-${i + 1}.png`) })).filter(x => (only === null || only === x.i) && (force || (!mock && wasMock) || !fs.existsSync(x.file)));
   if (!todo.length) { console.log('Görseller zaten hazır (yeniden için --force)'); return; }
-  if (mock) { await mockImages(todo.map(x => ({ ...x, text: x.s.aksiyon }))); console.log(todo.length + ' sahte görsel'); return; }
+  if (mock) { await mockImages(todo.map(x => ({ ...x, text: x.s.aksiyon }))); fs.writeFileSync(flag, 'sahte görseller: yayınlanamaz'); console.log(todo.length + ' sahte görsel'); return; }
   const provider = process.env.IMAGE_PROVIDER || 'gemini', refDir = path.join(ROOT, 'out', 'seri-' + dizi); fs.mkdirSync(refDir, { recursive: true });
   const gen = provider === 'openai' ? (p) => openai(p) : (p, refs) => gemini(p, refs);
   // Gemini: karakter tutarlılığı için önce her karakterin referans görselini üret ve sonraki sahnelerde kullan
@@ -61,5 +61,6 @@ async function mockImages(items) {
     process.stdout.write(`Sahne ${x.i + 1}/${ep.sahneler.length}\n`);
     fs.writeFileSync(x.file, await gen(scenePrompt(b, x.s), x.s.kimler.map(k => refOf[k]).filter(Boolean)));
   }
+  if (only === null && wasMock) fs.unlinkSync(flag);
   console.log('Görseller hazır');
 })().catch(e => { console.error(e.message); process.exit(1); });
