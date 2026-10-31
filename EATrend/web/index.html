@@ -73,16 +73,17 @@ dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);bor
 <!-- AYARLAR -->
 <section class="view" id="ayarlar"><h1>Ayarlar</h1><p class="sub">Anahtarların sadece bu bilgisayarda saklanır.</p>
   <div class="card"><h2>1. Yapay zekâ (Gemini) <span id="geminiChip"></span></h2><p class="hint">Tek anahtar hem senaryoyu hem görselleri üretir. <a style="color:var(--a)" href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> adresinden al. Görsel üretimi ücretli olabilir.</p>
-    <div class="flex" style="flex-wrap:nowrap"><input id="geminiKey" type="password" placeholder="Gemini API anahtarı" autocomplete="off"><button class="b" id="saveGemini">Kaydet</button></div></div>
+    <div class="flex" style="flex-wrap:nowrap"><input id="geminiKey" type="password" placeholder="Gemini API anahtarı" autocomplete="off"><button class="b" id="saveGemini">Kaydet</button><button class="b bad" id="delGemini" hidden>Kaldır</button></div></div>
   <div class="card"><h2>2. Ses <span id="sesChip"></span></h2>
     <div class="seg" id="sesSeg"><button data-s="edge">Ücretsiz (Edge)</button><button data-s="elevenlabs">ElevenLabs</button></div>
     <div id="edgeInfo" class="hint" style="margin-top:10px"></div>
-    <div id="elInfo" hidden><label class="l">ElevenLabs anahtarı</label><input id="elKey" type="password" placeholder="sk_…" autocomplete="off"><p class="hint">Karakterlere ses atamak için Manuel stüdyo'yu kullan.</p></div>
+    <div id="elInfo" hidden><label class="l">ElevenLabs anahtarı <span id="elChip"></span></label><div class="flex" style="flex-wrap:nowrap"><input id="elKey" type="password" placeholder="sk_…" autocomplete="off"><button class="b bad" id="delEl" hidden>Kaldır</button></div><p class="hint">Karakterlere ses atamak için Manuel stüdyo'yu kullan.</p></div>
     <div style="margin-top:12px"><button class="b g" id="saveSes">Kaydet</button></div></div>
   <div class="card"><h2>3. YouTube <span id="ytChip"></span></h2>
     <p class="hint">Onayladığın bölümler gizli yüklenir ve planlanan saatte YouTube kendisi yayınlar. Bilgisayarın o saatte kapalı olsa da yayın çıkar.</p>
-    <div class="row2 grid g2"><div><label class="l" style="margin-top:0">Client ID</label><input id="ytId" autocomplete="off"></div><div><label class="l" style="margin-top:0">Client Secret</label><input id="ytSecret" type="password" autocomplete="off"></div></div>
-    <div class="flex" style="margin-top:12px"><button class="b g" id="saveYt">Kaydet</button><button class="b" id="connectYt">Google ile bağlan</button></div>
+    <div class="row2 grid g2"><div><label class="l" style="margin-top:0">Client ID <span id="ytIdChip"></span></label><input id="ytId" autocomplete="off" placeholder="123456789-abc….apps.googleusercontent.com"></div><div><label class="l" style="margin-top:0">Client Secret <span id="ytSecChip"></span></label><input id="ytSecret" type="password" autocomplete="off" placeholder="GOCSPX-…"></div></div>
+    <div class="flex" style="margin-top:12px"><button class="b g" id="saveYt">Kaydet</button><button class="b" id="connectYt">Google ile bağlan</button><button class="b bad" id="delYt" hidden>Bağlantıyı kaldır</button></div>
+    <details><summary>"invalid_client" hatası alırsan</summary><div class="hint"><ul><li><b>Client ID</b> mutlaka <code>.apps.googleusercontent.com</code> ile biter. API anahtarı ya da Secret değildir.</li><li>İstemci türü <b>Web uygulaması</b> olmalı (Masaüstü uygulaması değil).</li><li>Yetkili yönlendirme URI'sine aynen <code>http://localhost:3000/oauth/google/callback</code> eklenmiş olmalı.</li><li>Kimlik bilgisini oluşturduktan sonra birkaç dakika beklemek gerekebilir.</li><li>Önce <b>Kaydet</b>'e bas, sonra "Google ile bağlan".</li></ul></div></details>
     <details><summary>Client ID nasıl alınır?</summary><ol class="hint"><li>console.cloud.google.com → yeni proje oluştur.</li><li>"YouTube Data API v3"yi etkinleştir.</li><li>OAuth onay ekranını kur (Harici, kendi e-postanı test kullanıcısı ekle).</li><li>Kimlik bilgileri → OAuth istemci kimliği → Web uygulaması. Yetkili yönlendirme URI'si: <code>http://localhost:3000/oauth/google/callback</code></li><li>Çıkan Client ID ve Secret'ı buraya yapıştır.</li></ol>
       <div class="warn">Google, doğrulanmamış API projelerinden yüklenen videoları gizli tutabilir. Videoların herkese açılması için YouTube'un API denetim başvurusunu yapman gerekebilir. Bağlantı çalışsa da bu aşamada videolar gizli kalırsa sebep budur.</div></details></div>
   <div class="card"><h2>4. Otomasyon</h2>
@@ -180,7 +181,12 @@ dlg.addEventListener('close', () => { $('dlgVid').pause(); });
 let sesSel = 'edge', fresh = true;
 function seg(id, v, fn) { document.querySelectorAll(`#${id} button`).forEach(b => { b.classList.toggle('on', b.dataset.s === v); b.onclick = () => { seg(id, b.dataset.s, fn); fn(b.dataset.s); }; }); }
 function drawSettings(force = true) { if (!Z) return; const H = Z.hazirlik, A = Z.ayarlar;
-  $('geminiChip').innerHTML = H.gemini ? '<span class="chip ok">kayıtlı</span>' : '<span class="chip bad">yok</span>';
+  const I = H.ipucu || {}, setK = (inp, chip, del, val, ph) => { $(inp).placeholder = val ? `${val} (kayıtlı, değiştirmek için yenisini yapıştır)` : ph; $(chip) && ($(chip).innerHTML = val ? `<span class="chip ok">kayıtlı ${esc(val.length > 12 ? val.slice(-4) : val)}</span>` : '<span class="chip bad">yok</span>'); $(del).hidden = !val; };
+  $('geminiChip').innerHTML = H.gemini ? `<span class="chip ok">kayıtlı ${esc(I.gemini.slice(-4))}</span>` : '<span class="chip bad">yok</span>';
+  $('geminiKey').placeholder = H.gemini ? `${I.gemini} (kayıtlı, değiştirmek için yenisini yapıştır)` : 'Gemini API anahtarı'; $('delGemini').hidden = !H.gemini;
+  setK('elKey', 'elChip', 'delEl', I.elevenlabs, 'sk_…');
+  $('ytIdChip').innerHTML = I.ytId ? '<span class="chip ok">kayıtlı</span>' : '<span class="chip bad">yok</span>'; if (I.ytId && document.activeElement !== $('ytId')) $('ytId').value = I.ytId;
+  $('ytSecChip').innerHTML = I.ytSecret ? `<span class="chip ok">kayıtlı ${esc(I.ytSecret.slice(-4))}</span>` : '<span class="chip bad">yok</span>'; $('ytSecret').placeholder = I.ytSecret ? `${I.ytSecret} (kayıtlı)` : 'GOCSPX-…'; $('delYt').hidden = !(I.ytId || I.ytSecret);
   $('sesChip').innerHTML = H.ses ? '<span class="chip ok">hazır</span>' : '<span class="chip bad">kurulum gerekli</span>';
   $('edgeInfo').innerHTML = H.ses ? 'Edge sesleri kurulu, anahtar gerekmez.' : 'Terminale yapıştır: <code>pip3 install edge-tts</code>';
   $('ytChip').innerHTML = H.ytBagli ? '<span class="chip ok">bağlı</span>' : H.ytAyar ? '<span class="chip a">bağlantı bekliyor</span>' : '<span class="chip">kurulmadı</span>';
@@ -188,8 +194,10 @@ function drawSettings(force = true) { if (!Z) return; const H = Z.hazirlik, A = 
     $('aSaat').value = A.saatler.join(', '); $('aTampon').value = A.tampon; $('aGunluk').value = A.gunlukUretim; $('aYt').checked = A.platformlar.youtube; $('aDemo').checked = A.demo; } }
 $('saveGemini').onclick = async () => { if (!$('geminiKey').value) return toast('Anahtarı yapıştır', true); const r = await api('/api/settings', { geminiKey: $('geminiKey').value, imageProvider: 'gemini' }); if (r) { $('geminiKey').value = ''; toast('Gemini anahtarı kaydedildi'); refresh(); } };
 $('saveSes').onclick = async () => { const r = await api('/api/settings', { sesSaglayici: sesSel, apiKey: $('elKey').value }); if (r) { $('elKey').value = ''; toast('Ses ayarı kaydedildi'); refresh(); } };
-$('saveYt').onclick = async () => { const r = await api('/api/app/yt-ayar', { clientId: $('ytId').value, clientSecret: $('ytSecret').value }); if (r) { $('ytId').value = $('ytSecret').value = ''; toast('Kaydedildi'); refresh(); } };
-$('connectYt').onclick = async () => { const r = await api('/api/app/yt-baglan'); if (r) location.href = r.url; };
+$('saveYt').onclick = async () => { const r = await api('/api/app/yt-ayar', { clientId: $('ytId').value, clientSecret: $('ytSecret').value }); if (r) { $('ytSecret').value = ''; toast('Kaydedildi. Şimdi "Google ile bağlan"a bas.'); refresh(); } };
+const delKey = (id, ad, msg) => $(id).onclick = async () => { if (!confirm(msg)) return; const r = await api('/api/app/anahtar-sil', { ad }); if (r) { toast('Kaldırıldı'); if (ad === 'yt') $('ytId').value = ''; refresh(); } };
+delKey('delGemini', 'gemini', 'Gemini anahtarı kaldırılsın mı?'); delKey('delEl', 'elevenlabs', 'ElevenLabs anahtarı kaldırılsın mı?'); delKey('delYt', 'yt', 'YouTube bağlantısı ve anahtarları kaldırılsın mı?');
+$('connectYt').onclick = async () => { if (!Z.hazirlik.ytAyar) return toast('Önce Client ID ve Client Secret\'i kaydet', true); const r = await api('/api/app/yt-baglan'); if (r) location.href = r.url; };
 $('saveAuto').onclick = async () => { const r = await api('/api/app/ayarlar', { saatler: $('aSaat').value.split(',').map(x => x.trim()).filter(Boolean), tampon: $('aTampon').value, gunlukUretim: $('aGunluk').value, demo: $('aDemo').checked, platformlar: { youtube: $('aYt').checked } }); if (r) { toast('Ayarlar kaydedildi'); refresh(); } };
 
 if (/yt=ok/.test(location.search)) { history.replaceState(null, '', '/'); setTimeout(() => toast('YouTube hesabı bağlandı'), 400); }

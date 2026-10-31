@@ -6,6 +6,7 @@ const rm = f => fs.rmSync(f, { recursive: true, force: true });
 function clean(n, from) { const d = store.outDir(n); if (!fs.existsSync(d)) return; const id = store.id(n);
   const del = { gorsel: ['img-*', 'mock.flag', 'ref-*', 'line-*', 'voice.wav', 'timeline.json', id + '.mp4'], ses: ['line-*', 'voice.wav', 'timeline.json', id + '.mp4'], video: [id + '.mp4'], senaryo: ['*'] }[from] || [];
   for (const f of fs.readdirSync(d)) if (del.some(p => p === '*' || (p.endsWith('*') ? f.startsWith(p.slice(0, -1)) : f === p))) rm(path.join(d, f)); }
+const mask = v => v ? '••••••••' + String(v).slice(-4) : '';
 let edgeOk = null; const edge = () => edgeOk ??= spawnSync('python3', ['-c', 'import edge_tts']).status === 0;
 const ep = e => ({ n: e.n, id: store.id(e.n), durum: e.durum, baslik: e.ytBaslik || e.baslik, aciklama: e.aciklama || '', asama: e.asama, yuzde: e.yuzde || 0, detay: e.detay || '', hata: e.hata || '', demo: !!e.demo, yayin: e.yayin || null, olusturma: e.olusturma, ...store.pubInfo(e) });
 
@@ -13,7 +14,7 @@ module.exports = (port) => ({
   'GET /api/app/ozet': async () => { const db = store.sync(), A = db.ayarlar, E = Object.values(db.episodes), env = ai.readEnv(), say = d => E.filter(e => e.durum === d).length;
     return { sayilar: { onay: say('onay_bekliyor'), uretim: E.filter(e => ['kuyrukta', 'uretiliyor'].includes(e.durum)).length, planli: say('planlandi'), yayin: say('yayinlandi'), paylasim: say('paylasim_bekliyor'), hata: say('hata') },
       aktif: E.filter(e => ['kuyrukta', 'uretiliyor'].includes(e.durum)).sort((a, b) => a.n - b.n).map(ep), planli: E.filter(e => e.durum === 'planlandi').sort((a, b) => a.yayin.zaman - b.yayin.zaman).map(ep),
-      ayarlar: A, hazirlik: { gemini: !!env.GEMINI_API_KEY, ses: (env.SES_SAGLAYICI || 'edge') === 'elevenlabs' ? !!env.ELEVENLABS_API_KEY : edge(), sesTur: env.SES_SAGLAYICI || 'edge', ytAyar: pub.ytConfigured(), ytBagli: pub.ytReady() },
+      ayarlar: A, hazirlik: { gemini: !!env.GEMINI_API_KEY, ses: (env.SES_SAGLAYICI || 'edge') === 'elevenlabs' ? !!env.ELEVENLABS_API_KEY : edge(), sesTur: env.SES_SAGLAYICI || 'edge', ytAyar: pub.ytConfigured(), ytBagli: pub.ytReady(), ipucu: { gemini: mask(env.GEMINI_API_KEY), elevenlabs: mask(env.ELEVENLABS_API_KEY), ytId: env.YT_CLIENT_ID || '', ytSecret: mask(env.YT_CLIENT_SECRET) } },
       log: db.log.slice(-25).reverse(), sonrakiSlot: worker.nextSlot() }; },
   'GET /api/app/bolumler': async () => ({ bolumler: Object.values(store.sync().episodes).sort((a, b) => b.n - a.n).map(ep) }),
   'GET /api/app/bolum': async (r, s, b, q) => { const e = nOf({ n: q.n }); let sc = null; try { sc = JSON.parse(fs.readFileSync(store.file(e.n), 'utf8')); } catch {} const o = fs.existsSync(store.outDir(e.n)) ? fs.readdirSync(store.outDir(e.n)).filter(f => /^img-\d+\.png$/.test(f)).sort() : [];
@@ -37,7 +38,11 @@ module.exports = (port) => ({
     if (b.demo !== undefined) A.demo = !!b.demo; if (b.tampon !== undefined) A.tampon = i(b.tampon, 1, 10); if (b.gunlukUretim !== undefined) A.gunlukUretim = i(b.gunlukUretim, 1, 10);
     if (Array.isArray(b.saatler)) { const s2 = b.saatler.filter(x => /^([01]\d|2[0-3]):[0-5]\d$/.test(x)).slice(0, 6); if (!s2.length) throw new Error('Geçerli saat yok (örn. 21:00)'); A.saatler = s2; }
     if (b.platformlar) A.platformlar = { ...A.platformlar, youtube: !!b.platformlar.youtube }; store.save(); return { ok: true, ayarlar: A }; },
-  'POST /api/app/yt-ayar': async (r, s, b) => { const p = {}; if (b.clientId) p.YT_CLIENT_ID = String(b.clientId).trim(); if (b.clientSecret) p.YT_CLIENT_SECRET = String(b.clientSecret).trim(); pub.setEnv(p); return { ok: true }; },
+  'POST /api/app/yt-ayar': async (r, s, b) => { const p = {}, clean = v => String(v || '').trim().replace(/^["']|["']$/g, '');
+    if (b.clientId) { const id = clean(b.clientId); if (!/^\d+-[\w-]+\.apps\.googleusercontent\.com$/.test(id)) throw new Error('Bu bir Client ID\'ye benzemiyor. Şuna benzemeli: 123456789-abcdef.apps.googleusercontent.com (sonu .apps.googleusercontent.com ile biter). Client Secret ya da API anahtarı girmiş olabilirsin.'); p.YT_CLIENT_ID = id; }
+    if (b.clientSecret) { const sec = clean(b.clientSecret); if (sec.length < 15 || /\s/.test(sec) || /apps\.googleusercontent\.com$/.test(sec)) throw new Error('Client Secret geçersiz görünüyor (genelde GOCSPX- ile başlar). Client ID\'yi buraya yapıştırmış olabilirsin.'); p.YT_CLIENT_SECRET = sec; }
+    if (!Object.keys(p).length) throw new Error('Kaydedilecek bir şey yok'); pub.setEnv(p); if (p.YT_CLIENT_ID || p.YT_CLIENT_SECRET) pub.setEnv({ YT_REFRESH_TOKEN: '' }); return { ok: true }; },
+  'POST /api/app/anahtar-sil': async (r, s, b) => { const map = { gemini: ['GEMINI_API_KEY'], elevenlabs: ['ELEVENLABS_API_KEY'], yt: ['YT_CLIENT_ID', 'YT_CLIENT_SECRET', 'YT_REFRESH_TOKEN'] }[b.ad]; if (!map) throw new Error('Geçersiz'); pub.setEnv(Object.fromEntries(map.map(k => [k, '']))); store.log('Anahtar kaldırıldı: ' + b.ad); return { ok: true }; },
   'GET /api/app/yt-baglan': async () => ({ url: pub.authUrl(port) }),
   'GET /oauth/google/callback': async (r, s, b, q) => { try { if (q.error) throw new Error(q.error); await pub.callback(port, q.code, q.state); return { __redirect: '/?yt=ok' }; } catch (e) { return { __html: `<meta charset=utf-8><body style="font:16px sans-serif;background:#090c15;color:#eee;padding:40px"><h2>YouTube bağlantısı başarısız</h2><p>${String(e.message).replace(/</g, '&lt;')}</p><a style="color:#ffb547" href="/">Geri dön</a>` }; } }
 });
