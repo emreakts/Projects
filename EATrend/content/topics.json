@@ -1,0 +1,8 @@
+{
+  "_not": "EATrend: güncel trend konuları. Her gün bir tür, sırayla döner. Rakam/iddia içeren her satırın kaynağı elle doğrulanmadan 'dogrulandi' true yapılmaz; false olanlar üretime girmez.",
+  "turler": ["teknoloji", "internet-kulturu", "para-ekonomi", "yasam-psikoloji"],
+  "sahneTipleri": ["hook", "stat", "liste", "bar", "kapanis"],
+  "gunler": [
+    { "gun": 1, "tur": "yasam-psikoloji", "baslik": "Kısa videolar beynimize ne yapıyor?", "ilkCumle": "Bu hafta herkes aynı soruyu soruyor.", "kaynak": "", "dogrulandi": false, "story": "kisa-video-beyni" }
+  ]
+}

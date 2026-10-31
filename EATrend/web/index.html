@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EATrend</title>
+<style>
+:root{--bg:#080b14;--side:#0c111e;--panel:#111827;--p2:#0d1422;--line:#212c44;--ink:#eef1f8;--mute:#8b97b1;--a:#ffb547;--a2:#5eead4;--ok:#4ade80;--bad:#ff6b6b;--r:14px;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,"SF Pro Text",Inter,Arial,sans-serif;display:grid;grid-template-columns:240px 1fr}
+@media(max-width:860px){body{grid-template-columns:1fr}aside{position:static!important;height:auto!important;flex-direction:row!important;flex-wrap:wrap;padding:10px!important}aside .foot{display:none}}
+aside{position:sticky;top:0;height:100vh;background:var(--side);border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:4px}
+.logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;padding:0 10px 18px}.logo i{width:12px;height:12px;border-radius:50%;background:var(--a);box-shadow:0 0 14px var(--a)}
+nav a,nav button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:10px;color:var(--mute);cursor:pointer;font-weight:600}
+nav a:hover,nav button:hover{background:#151d31;color:var(--ink)}nav button.on{background:#1a2440;color:var(--ink)}nav .ic{width:20px;text-align:center}
+.badge{margin-left:auto;background:var(--a);color:#1a1200;border-radius:99px;font-size:12px;font-weight:800;padding:1px 8px}
+.foot{margin-top:auto;font-size:12px;color:var(--mute);padding:10px 12px;border-top:1px solid var(--line)}
+main{padding:28px 34px 80px;max-width:1120px;width:100%}@media(max-width:700px){main{padding:18px 14px 80px}}
+h1{margin:0 0 4px;font-size:26px;letter-spacing:-.01em}.sub{color:var(--mute);margin:0 0 22px}h2{font-size:16px;margin:0 0 12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:16px}
+.grid{display:grid;gap:14px}.g5{grid-template-columns:repeat(5,1fr)}.g2{grid-template-columns:1fr 1fr}@media(max-width:900px){.g5{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;cursor:pointer}.stat b{display:block;font-size:28px;line-height:1.1}.stat span{color:var(--mute);font-size:13px}.stat.hot{border-color:var(--a)}
+.hint{color:var(--mute);font-size:13px}code{background:#0b1120;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font:12px ui-monospace,Menlo,monospace;color:var(--a2)}
+label.l{display:block;color:var(--mute);font-size:12px;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+input,select,textarea{width:100%;background:#0b1120;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;font:inherit}input:focus,select:focus,textarea:focus{outline:0;border-color:#4a5f95}
+input[type=checkbox]{width:auto;accent-color:var(--a)}textarea{resize:vertical;min-height:80px}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{margin-left:auto}
+.b{background:var(--a);color:#1a1200;border:0;border-radius:10px;padding:10px 16px;font:700 14px inherit;cursor:pointer}.b:hover{filter:brightness(1.08)}.b:disabled{opacity:.4;cursor:default}
+.b.g{background:transparent;color:var(--ink);border:1px solid var(--line)}.b.g:hover{border-color:#44558a}.b.ok{background:var(--ok);color:#062010}.b.bad{background:transparent;border:1px solid #5a2a2a;color:var(--bad)}.b.sm{padding:6px 11px;font-size:13px}.b.lg{padding:13px 22px;font-size:16px;border-radius:12px}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;background:#1d2740;color:var(--mute)}.chip.ok{background:#12301f;color:var(--ok)}.chip.bad{background:#3a1717;color:var(--bad)}.chip.a{background:#3a2a0c;color:var(--a)}.chip.b2{background:#14284a;color:#8ab4ff}
+.sw{position:relative;width:54px;height:30px;background:#26314d;border-radius:99px;cursor:pointer;flex:none;transition:.2s}.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}.sw.on{background:var(--ok)}.sw.on::after{left:27px}
+.bar{height:8px;background:#0b1120;border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--a),var(--a2));transition:width .6s}
+.steps{display:flex;gap:6px;margin:10px 0 6px;font-size:12px;color:var(--mute)}.steps span{flex:1;text-align:center;padding:4px;border-radius:6px;background:#0b1120}.steps span.on{background:#3a2a0c;color:var(--a);font-weight:700}.steps span.done{color:var(--ok)}
+.ep{display:grid;grid-template-columns:230px 1fr;gap:20px}@media(max-width:800px){.ep{grid-template-columns:1fr}}
+.ep video{width:100%;border-radius:12px;background:#000;aspect-ratio:9/16;object-fit:cover}
+.sc{background:var(--p2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0;font-size:13px}.sc b{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}.sc div span{font-weight:700}
+.th{display:flex;gap:6px;margin:10px 0}.th img{height:86px;border-radius:8px;border:1px solid var(--line)}
+.list{display:grid;gap:8px}.row{display:grid;grid-template-columns:70px 1fr auto auto;gap:12px;align-items:center;background:var(--p2);border:1px solid var(--line);border-radius:12px;padding:10px 14px}@media(max-width:700px){.row{grid-template-columns:50px 1fr}}
+.log div{padding:5px 0;border-bottom:1px solid #18213a;font-size:13px;color:var(--mute)}.log time{color:#5f6b86;margin-right:8px}
+.seg{display:inline-flex;background:#0b1120;border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px}.seg button{all:unset;cursor:pointer;padding:8px 14px;border-radius:8px;font-weight:600;font-size:14px;color:var(--mute)}.seg button.on{background:#1f2b4a;color:var(--ink)}
+.view{display:none}.view.on{display:block}details summary{cursor:pointer;color:var(--mute);font-weight:600;padding:6px 0}
+.warn{background:#2a1d08;border:1px solid #6b4a12;color:#ffd58a;border-radius:10px;padding:10px 14px;font-size:14px;margin-bottom:12px}
+.steps3{display:grid;gap:10px}.st{display:flex;gap:12px;align-items:flex-start;background:var(--p2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.st .n{width:26px;height:26px;border-radius:8px;background:#232f4d;display:grid;place-items:center;font-weight:800;flex:none}.st.done .n{background:#12301f;color:var(--ok)}.st.done .n::after{content:"✓"}.st.done .n span{display:none}
+#toast{position:fixed;right:22px;bottom:22px;display:grid;gap:8px;z-index:20}#toast div{background:#1a2340;border:1px solid #33466b;border-left:4px solid var(--ok);padding:10px 16px;border-radius:10px;box-shadow:0 8px 30px #0008;max-width:400px;font-size:14px}#toast div.bad{border-left-color:var(--bad)}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:420px;width:92%}dialog::backdrop{background:#000a}dialog video{width:100%;border-radius:10px;max-height:70vh}
+</style></head><body>
+<aside>
+  <div class="logo"><i></i>EATrend</div>
+  <nav>
+    <button data-v="panel" class="on"><span class="ic">◉</span>Panel</button>
+    <button data-v="onay"><span class="ic">✓</span>Onay merkezi<span class="badge" id="bOnay" hidden>0</span></button>
+    <button data-v="bolumler"><span class="ic">☰</span>Bölümler</button>
+    <button data-v="ayarlar"><span class="ic">⚙</span>Ayarlar</button>
+    <a href="/web/studyo.html" target="_blank"><span class="ic">✎</span>Manuel stüdyo ↗</a>
+  </nav>
+  <div class="foot">Bıdık ile Zıpır Al-Sat<br>Kurgusal komedi dizisi</div>
+</aside>
+<main>
+
+<!-- PANEL -->
+<section class="view on" id="panel">
+  <h1>Panel</h1><p class="sub">Sistem kendi çalışır. Sen sadece onay ver.</p>
+  <div id="onboard"></div>
+  <div class="grid g5" id="stats"></div>
+  <div class="card" style="margin-top:16px"><div class="flex"><div><h2 style="margin:0">Otomatik pilot</h2><div class="hint" id="pilotTxt"></div></div><div class="sp flex"><span class="hint" id="pilotLbl"></span><div class="sw" id="pilot"></div></div></div></div>
+  <div class="card"><h2>Üretim hattı</h2><div id="aktif"><span class="hint">Şu an üretimde bölüm yok.</span></div><div style="margin-top:12px" class="flex"><button class="b" id="uretBtn">+ Yeni bölüm üret</button><button class="b g" id="demoBtn">Demo bölüm (sahte görsel, ücretsiz)</button></div></div>
+  <div class="grid g2"><div class="card"><h2>Sıradaki yayınlar</h2><div id="planli" class="list"></div></div><div class="card"><h2>Etkinlik</h2><div id="log" class="log"></div></div></div>
+</section>
+
+<!-- ONAY -->
+<section class="view" id="onay"><h1>Onay merkezi</h1><p class="sub">Hazır bölümleri izle, onayla. Gerisini sistem yapar.</p><div id="onayList"></div><div id="paylasimList"></div></section>
+
+<!-- BÖLÜMLER -->
+<section class="view" id="bolumler"><h1>Bölümler</h1><p class="sub">Tüm bölümler ve durumları.</p><div class="list" id="allList"></div></section>
+
+<!-- AYARLAR -->
+<section class="view" id="ayarlar"><h1>Ayarlar</h1><p class="sub">Anahtarların sadece bu bilgisayarda saklanır.</p>
+  <div class="card"><h2>1. Yapay zekâ (Gemini) <span id="geminiChip"></span></h2><p class="hint">Tek anahtar hem senaryoyu hem görselleri üretir. <a style="color:var(--a)" href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> adresinden al. Görsel üretimi ücretli olabilir.</p>
+    <div class="flex" style="flex-wrap:nowrap"><input id="geminiKey" type="password" placeholder="Gemini API anahtarı" autocomplete="off"><button class="b" id="saveGemini">Kaydet</button><button class="b bad" id="delGemini" hidden>Kaldır</button></div></div>
+  <div class="card"><h2>2. Ses <span id="sesChip"></span></h2>
+    <div class="seg" id="sesSeg"><button data-s="edge">Ücretsiz (Edge)</button><button data-s="elevenlabs">ElevenLabs</button></div>
+    <div id="edgeInfo" class="hint" style="margin-top:10px"></div>
+    <div id="elInfo" hidden><label class="l">ElevenLabs anahtarı <span id="elChip"></span></label><div class="flex" style="flex-wrap:nowrap"><input id="elKey" type="password" placeholder="sk_…" autocomplete="off"><button class="b bad" id="delEl" hidden>Kaldır</button></div><p class="hint">Karakterlere ses atamak için Manuel stüdyo'yu kullan.</p></div>
+    <div style="margin-top:12px"><button class="b g" id="saveSes">Kaydet</button></div></div>
+  <div class="card"><h2>3. YouTube <span id="ytChip"></span></h2>
+    <p class="hint">Onayladığın bölümler gizli yüklenir ve planlanan saatte YouTube kendisi yayınlar. Bilgisayarın o saatte kapalı olsa da yayın çıkar.</p>
+    <div class="row2 grid g2"><div><label class="l" style="margin-top:0">Client ID <span id="ytIdChip"></span></label><input id="ytId" autocomplete="off" placeholder="123456789-abc….apps.googleusercontent.com"></div><div><label class="l" style="margin-top:0">Client Secret <span id="ytSecChip"></span></label><input id="ytSecret" type="password" autocomplete="off" placeholder="GOCSPX-…"></div></div>
+    <div class="flex" style="margin-top:12px"><button class="b g" id="saveYt">Kaydet</button><button class="b" id="connectYt">Google ile bağlan</button><button class="b bad" id="delYt" hidden>Bağlantıyı kaldır</button></div>
+    <details><summary>"invalid_client" hatası alırsan</summary><div class="hint"><ul><li><b>Client ID</b> mutlaka <code>.apps.googleusercontent.com</code> ile biter. API anahtarı ya da Secret değildir.</li><li>İstemci türü <b>Web uygulaması</b> olmalı (Masaüstü uygulaması değil).</li><li>Yetkili yönlendirme URI'sine aynen <code>http://localhost:3000/oauth/google/callback</code> eklenmiş olmalı.</li><li>Kimlik bilgisini oluşturduktan sonra birkaç dakika beklemek gerekebilir.</li><li>Önce <b>Kaydet</b>'e bas, sonra "Google ile bağlan".</li></ul></div></details>
+    <details><summary>Client ID nasıl alınır?</summary><ol class="hint"><li>console.cloud.google.com → yeni proje oluştur.</li><li>"YouTube Data API v3"yi etkinleştir.</li><li>OAuth onay ekranını kur (Harici, kendi e-postanı test kullanıcısı ekle).</li><li>Kimlik bilgileri → OAuth istemci kimliği → Web uygulaması. Yetkili yönlendirme URI'si: <code>http://localhost:3000/oauth/google/callback</code></li><li>Çıkan Client ID ve Secret'ı buraya yapıştır.</li></ol>
+      <div class="warn">Google, doğrulanmamış API projelerinden yüklenen videoları gizli tutabilir. Videoların herkese açılması için YouTube'un API denetim başvurusunu yapman gerekebilir. Bağlantı çalışsa da bu aşamada videolar gizli kalırsa sebep budur.</div></details></div>
+  <div class="card"><h2>4. Otomasyon</h2>
+    <div class="grid g2"><div><label class="l" style="margin-top:0">Yayın saatleri (virgülle)</label><input id="aSaat" placeholder="21:00"></div><div><label class="l" style="margin-top:0">Onay bekleyen en fazla (tampon)</label><input id="aTampon" type="number" min="1" max="10"></div></div>
+    <div class="grid g2"><div><label class="l">Günde en fazla otomatik bölüm</label><input id="aGunluk" type="number" min="1" max="10"></div><div><label class="l">Platformlar</label><label class="flex" style="margin:8px 0"><input type="checkbox" id="aYt"> YouTube'a otomatik yükle</label></div></div>
+    <label class="flex" style="margin-top:12px"><input type="checkbox" id="aDemo"> <span><b>Demo modu</b><br><span class="hint">Sahte görsellerle dener. Demo bölümler yayınlanamaz.</span></span></label>
+    <div style="margin-top:12px"><button class="b" id="saveAuto">Otomasyon ayarlarını kaydet</button></div></div>
+</section>
+</main>
+<div id="toast"></div>
+<dialog id="dlg"><video id="dlgVid" controls></video><div class="flex" style="margin-top:12px"><button class="b g sm" onclick="dlg.close()">Kapat</button></div></dialog>
+<dialog id="rej"><h2>Reddet</h2><label class="l" style="margin-top:0">Ne beğenmedin? (yapay zekâya geri bildirim)</label><textarea id="rejNote" placeholder="örn. şakalar zayıf, sonu daha sürprizli olsun"></textarea>
+  <div class="flex" style="margin-top:12px"><button class="b" id="rejRewrite">Yeniden yaz</button><button class="b bad" id="rejOnly">Sadece reddet</button><button class="b g" onclick="rej.close()">Vazgeç</button></div></dialog>
+
+<script>
+const $ = id => document.getElementById(id), dlg = $('dlg'), rej = $('rej');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const toast = (t, bad) => { const d = document.createElement('div'); d.textContent = t; if (bad) d.className = 'bad'; $('toast').append(d); setTimeout(() => d.remove(), bad ? 8000 : 3200); };
+async function api(p, body) { try { const r = await (await fetch(p, body !== undefined ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {})).json(); if (r.error) { toast(r.error, true); return null; } return r; } catch (e) { toast('Sunucuya ulaşılamadı', true); return null; } }
+const fmt = t => new Date(t).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const DURUM = { taslak: ['Taslak', ''], kuyrukta: ['Sırada', 'b2'], uretiliyor: ['Üretiliyor', 'a'], onay_bekliyor: ['Onay bekliyor', 'a'], planlandi: ['Planlandı', 'ok'], yayinlandi: ['Yayınlandı', 'ok'], paylasim_bekliyor: ['Elle paylaş', 'a'], reddedildi: ['Reddedildi', 'bad'], hata: ['Hata', 'bad'] };
+const chip = d => { const [t, c] = DURUM[d] || [d, '']; return `<span class="chip ${c}">${t}</span>`; };
+let Z = null, view = 'panel';
+
+// gezinme
+function go(v) { view = v; document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v)); document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === v)); try { localStorage.v = v } catch {} refresh(); }
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => go(b.dataset.v));
+
+// ---- veri
+async function refresh() { Z = await api('/api/app/ozet'); if (!Z) return; $('bOnay').hidden = !Z.sayilar.onay; $('bOnay').textContent = Z.sayilar.onay;
+  if (view === 'panel') drawPanel(); if (view === 'onay') drawOnay(); if (view === 'bolumler') drawAll(); if (view === 'ayarlar') drawSettings(false); }
+setInterval(() => { if (!document.hidden && !document.querySelector('textarea:focus,input:focus')) refresh(); }, 3500);
+
+// ---- PANEL
+function stepsHtml(asama) { const S = [['senaryo', 'Senaryo'], ['gorsel', 'Görsel'], ['ses', 'Ses'], ['video', 'Video']], i = S.findIndex(s => s[0] === asama); return `<div class="steps">${S.map((s, k) => `<span class="${k < i ? 'done' : k === i ? 'on' : ''}">${s[1]}</span>`).join('')}</div>`; }
+function drawPanel() {
+  const H = Z.hazirlik, A = Z.ayarlar, S = Z.sayilar, ready = (H.gemini || A.demo) && H.ses;
+  $('onboard').innerHTML = (!H.gemini && !A.demo) || !H.ses ? `<div class="card"><h2>Başlamak için</h2><div class="steps3">
+    <div class="st ${H.gemini ? 'done' : ''}"><div class="n"><span>1</span></div><div><b>Gemini anahtarını ekle</b><div class="hint">Senaryo ve görselleri üretmek için. <a style="color:var(--a);cursor:pointer" onclick="go('ayarlar')">Ayarlar'a git →</a></div></div></div>
+    <div class="st ${H.ses ? 'done' : ''}"><div class="n"><span>2</span></div><div><b>Ses</b><div class="hint">${H.ses ? 'Hazır.' : 'Ücretsiz sesler için terminalde bir kere <code>pip3 install edge-tts</code> çalıştır.'}</div></div></div>
+    <div class="st ${H.ytBagli ? 'done' : ''}"><div class="n"><span>3</span></div><div><b>YouTube'u bağla <span class="chip">isteğe bağlı</span></b><div class="hint">Bağlamazsan videoları indirip elle paylaşırsın.</div></div></div></div></div>` : '';
+  const st = [['Onay bekleyen', S.onay, 'onay', S.onay > 0], ['Üretimde', S.uretim, 'bolumler'], ['Planlı', S.planli, 'bolumler'], ['Yayınlanan', S.yayin, 'bolumler'], ['Hatalı', S.hata, 'bolumler']];
+  $('stats').innerHTML = st.map(s => `<div class="stat ${s[3] ? 'hot' : ''}" onclick="go('${s[2]}')"><b>${s[1]}</b><span>${s[0]}</span></div>`).join('');
+  $('pilot').classList.toggle('on', A.otomatik); $('pilotLbl').textContent = A.otomatik ? 'Açık' : 'Kapalı';
+  $('pilotTxt').innerHTML = `Günde en fazla <b>${A.gunlukUretim}</b> bölüm üretir, onay bekleyen sayısı <b>${A.tampon}</b>'e kadar doldurur. Yayın saati: <b>${A.saatler.join(', ')}</b>${A.demo ? ' · <span class="chip a">DEMO MODU</span>' : ''}`;
+  $('aktif').innerHTML = Z.aktif.length ? Z.aktif.map(e => `<div style="margin-bottom:14px"><div class="flex"><b>Bölüm ${e.n}</b> <span class="hint">${esc(e.baslik)}</span> ${e.demo ? '<span class="chip a">demo</span>' : ''}<span class="sp hint">${e.yuzde}%</span></div><div class="bar"><i style="width:${e.yuzde}%"></i></div>${stepsHtml(e.asama)}<div class="hint">${esc(e.detay)}</div></div>`).join('') : '<span class="hint">Şu an üretimde bölüm yok.</span>';
+  $('planli').innerHTML = Z.planli.length ? Z.planli.map(e => `<div class="row" style="grid-template-columns:50px 1fr auto"><b>#${e.n}</b><span>${esc(e.baslik)}</span><span class="hint">${fmt(e.yayin.zaman)} ${e.yayin.youtube ? (e.yayin.youtube.durum === 'yuklendi' ? '<span class="chip ok">YT yüklendi</span>' : '<span class="chip a">YT bekliyor</span>') : ''}</span></div>`).join('') : '<span class="hint">Planlı yayın yok.</span>';
+  $('log').innerHTML = Z.log.map(l => `<div><time>${new Date(l.t).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</time>${esc(l.m)}</div>`).join('') || '<span class="hint">Henüz etkinlik yok.</span>';
+  $('uretBtn').disabled = !H.gemini; $('uretBtn').title = H.gemini ? '' : 'Önce Gemini anahtarını ekle';
+}
+$('pilot').onclick = async () => { const r = await api('/api/app/ayarlar', { otomatik: !Z.ayarlar.otomatik }); if (r) { toast(r.ayarlar.otomatik ? 'Otomatik pilot açıldı' : 'Otomatik pilot kapandı'); refresh(); } };
+$('uretBtn').onclick = async () => { const r = await api('/api/app/uret', { demo: false }); if (r) { toast(`Bölüm ${r.n} sıraya alındı`); refresh(); } };
+$('demoBtn').onclick = async () => { const r = await api('/api/app/uret', { demo: true }); if (r) { toast(`Demo bölüm ${r.n} üretiliyor`); refresh(); } };
+
+// ---- ONAY
+const SPK = { bidik: '#ffb547', zipir: '#5eead4' }, NAME = { bidik: 'Bıdık', zipir: 'Zıpır' };
+const toLocal = ms => new Date(ms - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+let openCards = {};
+async function drawOnay() {
+  const { bolumler } = (await api('/api/app/bolumler')) || { bolumler: [] }, pend = bolumler.filter(e => e.durum === 'onay_bekliyor').sort((a, b) => a.n - b.n), man = bolumler.filter(e => e.durum === 'paylasim_bekliyor');
+  const focus = document.activeElement && document.activeElement.closest && document.activeElement.closest('#onayList'); if (focus && document.activeElement.matches('input,textarea')) return;
+  const cards = await Promise.all(pend.map(e => api('/api/app/bolum?n=' + e.n)));
+  $('onayList').innerHTML = cards.filter(Boolean).map(d => `<div class="card" data-n="${d.n}"><div class="ep"><div><video controls preload="metadata" src="${d.video ? `/out/${d.id}/${d.id}.mp4` : ''}" ${d.gorseller[0] ? `poster="${d.gorseller[0]}"` : ''}></video></div><div>
+    <div class="flex"><h2 style="margin:0">Bölüm ${d.n}</h2>${d.demo || d.mock ? '<span class="chip a">DEMO: yayınlanamaz</span>' : '<span class="chip ok">gerçek görsel</span>'}</div>
+    ${d.mock ? '<div class="warn" style="margin-top:10px">Bu bölümde sahte görseller var, yayınlanamaz. Gemini anahtarını ekleyip "Görselleri yenile"ye bas.</div>' : ''}
+    <label class="l">Başlık</label><input data-f="baslik" value="${esc(d.baslik)}">
+    <label class="l">Açıklama</label><textarea data-f="aciklama" rows="4">${esc(d.aciklama)}</textarea>
+    <label class="l">Yayın zamanı</label><input type="datetime-local" data-f="zaman" value="${toLocal(d.slotOneri)}">
+    <details style="margin-top:10px"><summary>Senaryo (${d.senaryo ? d.senaryo.sahneler.length : 0} sahne)</summary>${d.senaryo ? d.senaryo.sahneler.map((s, i) => `<div class="sc"><b>Sahne ${i + 1}</b>${s.satirlar.map(l => `<div><span style="color:${SPK[l.k]}">${NAME[l.k]}:</span> ${esc(l.m)}</div>`).join('')}</div>`).join('') : ''}</details>
+    ${d.gorseller.length ? `<div class="th">${d.gorseller.map(u => `<img src="${u}?t=${d.olusturma}">`).join('')}</div>` : ''}
+    <div class="flex" style="margin-top:14px"><button class="b ok lg" data-a="onay" ${d.mock ? 'disabled' : ''}>✓ Onayla ve planla</button><button class="b g" data-a="reddet">Reddet…</button><button class="b g sm" data-a="gorsel">↻ Görselleri yenile</button><button class="b g sm" data-a="sil">Sil</button></div></div></div></div>`).join('') || '<div class="card"><span class="hint">Onay bekleyen bölüm yok. Panel\'den yeni bölüm üret ya da otomatik pilotu aç.</span></div>';
+  $('paylasimList').innerHTML = man.length ? `<h2 style="margin-top:24px">Elle paylaşılacaklar</h2><p class="hint">YouTube bağlı değil ya da yükleme olmadı. Videoyu indir, başlığı ve açıklamayı kopyala, paylaş.</p>` + man.map(e => `<div class="card flex"><b>#${e.n}</b><span>${esc(e.baslik)}</span><span class="sp flex"><a class="b g sm" href="/out/${e.id}/${e.id}.mp4" download>⬇ Video</a><button class="b g sm" data-copy="${e.n}">Metni kopyala</button><button class="b sm" data-done="${e.n}">Paylaştım</button></span></div>`).join('') : '';
+}
+$('onayList').addEventListener('click', async e => { const a = e.target.dataset.a; if (!a) return; const card = e.target.closest('.card'), n = +card.dataset.n, q = f => card.querySelector(`[data-f=${f}]`).value;
+  if (a === 'onay') { const r = await api('/api/app/onayla', { n, baslik: q('baslik'), aciklama: q('aciklama'), zaman: new Date(q('zaman')).toISOString() }); if (r) { toast('Onaylandı, planlandı: ' + fmt(r.zaman)); refresh(); } }
+  if (a === 'reddet') { rej.dataset.n = n; $('rejNote').value = ''; rej.showModal(); }
+  if (a === 'gorsel') { const r = await api('/api/app/yeniden', { n, from: 'gorsel', demo: false }); if (r) { toast('Görseller yeniden üretiliyor'); refresh(); } }
+  if (a === 'sil') { if (confirm(`Bölüm ${n} silinsin mi?`)) { const r = await api('/api/app/sil', { n }); if (r) refresh(); } } });
+$('rejRewrite').onclick = async () => { const r = await api('/api/app/reddet', { n: +rej.dataset.n, yenidenYaz: true, not: $('rejNote').value }); rej.close(); if (r) { toast('Yeniden yazılıyor'); refresh(); } };
+$('rejOnly').onclick = async () => { const r = await api('/api/app/reddet', { n: +rej.dataset.n }); rej.close(); if (r) refresh(); };
+$('paylasimList').addEventListener('click', async e => { const c = e.target.dataset.copy, d = e.target.dataset.done;
+  if (c) { const r = await api('/api/app/paket?n=' + c); if (r) { await navigator.clipboard.writeText(r.baslik + '\n\n' + r.aciklama); toast('Kopyalandı'); } } if (d) { const r = await api('/api/app/paylasildi', { n: +d }); if (r) refresh(); } });
+
+// ---- BÖLÜMLER
+async function drawAll() { const r = await api('/api/app/bolumler'); if (!r) return;
+  $('allList').innerHTML = r.bolumler.map(e => `<div class="row"><b>#${e.n}</b><div><div>${esc(e.baslik || '—')}</div><div class="hint">${fmt(e.olusturma)}${e.yayin ? ' · yayın ' + fmt(e.yayin.zaman) : ''}${e.demo || e.mock ? ' · demo' : ''}${e.hata ? ' · <span style="color:var(--bad)">' + esc(e.hata) + '</span>' : ''}</div></div>${chip(e.durum)}
+    <div class="flex">${e.video ? `<button class="b g sm" data-play="${e.id}">▶ İzle</button>` : ''}${e.durum === 'hata' ? `<button class="b sm" data-retry="${e.n}">Tekrar dene</button>` : ''}${e.durum === 'taslak' ? `<button class="b sm" data-queue="${e.n}">Üret</button>` : ''}${['reddedildi', 'taslak', 'hata'].includes(e.durum) ? `<button class="b bad sm" data-del="${e.n}">Sil</button>` : ''}</div></div>`).join('') || '<span class="hint">Henüz bölüm yok.</span>'; }
+$('allList').addEventListener('click', async e => { const d = e.target.dataset;
+  if (d.play) { $('dlgVid').src = `/out/${d.play}/${d.play}.mp4`; dlg.showModal(); }
+  if (d.retry || d.queue) { const n = +(d.retry || d.queue), r = await api('/api/app/yeniden', { n, from: 'gorsel' }); if (r) { toast('Sıraya alındı'); refresh(); } }
+  if (d.del && confirm('Silinsin mi?')) { const r = await api('/api/app/sil', { n: +d.del }); if (r) refresh(); } });
+dlg.addEventListener('close', () => { $('dlgVid').pause(); });
+
+// ---- AYARLAR
+let sesSel = 'edge', fresh = true;
+function seg(id, v, fn) { document.querySelectorAll(`#${id} button`).forEach(b => { b.classList.toggle('on', b.dataset.s === v); b.onclick = () => { seg(id, b.dataset.s, fn); fn(b.dataset.s); }; }); }
+function drawSettings(force = true) { if (!Z) return; const H = Z.hazirlik, A = Z.ayarlar;
+  const I = H.ipucu || {}, setK = (inp, chip, del, val, ph) => { $(inp).placeholder = val ? `${val} (kayıtlı, değiştirmek için yenisini yapıştır)` : ph; $(chip) && ($(chip).innerHTML = val ? `<span class="chip ok">kayıtlı ${esc(val.length > 12 ? val.slice(-4) : val)}</span>` : '<span class="chip bad">yok</span>'); $(del).hidden = !val; };
+  $('geminiChip').innerHTML = H.gemini ? `<span class="chip ok">kayıtlı ${esc(I.gemini.slice(-4))}</span>` : '<span class="chip bad">yok</span>';
+  $('geminiKey').placeholder = H.gemini ? `${I.gemini} (kayıtlı, değiştirmek için yenisini yapıştır)` : 'Gemini API anahtarı'; $('delGemini').hidden = !H.gemini;
+  setK('elKey', 'elChip', 'delEl', I.elevenlabs, 'sk_…');
+  $('ytIdChip').innerHTML = I.ytId ? '<span class="chip ok">kayıtlı</span>' : '<span class="chip bad">yok</span>'; if (I.ytId && document.activeElement !== $('ytId')) $('ytId').value = I.ytId;
+  $('ytSecChip').innerHTML = I.ytSecret ? `<span class="chip ok">kayıtlı ${esc(I.ytSecret.slice(-4))}</span>` : '<span class="chip bad">yok</span>'; $('ytSecret').placeholder = I.ytSecret ? `${I.ytSecret} (kayıtlı)` : 'GOCSPX-…'; $('delYt').hidden = !(I.ytId || I.ytSecret);
+  $('sesChip').innerHTML = H.ses ? '<span class="chip ok">hazır</span>' : '<span class="chip bad">kurulum gerekli</span>';
+  $('edgeInfo').innerHTML = H.ses ? 'Edge sesleri kurulu, anahtar gerekmez.' : 'Terminale yapıştır: <code>pip3 install edge-tts</code>';
+  $('ytChip').innerHTML = H.ytBagli ? '<span class="chip ok">bağlı</span>' : H.ytAyar ? '<span class="chip a">bağlantı bekliyor</span>' : '<span class="chip">kurulmadı</span>';
+  if (fresh || force) { fresh = false; sesSel = H.sesTur; seg('sesSeg', sesSel, v => { sesSel = v; $('elInfo').hidden = v !== 'elevenlabs'; }); $('elInfo').hidden = sesSel !== 'elevenlabs';
+    $('aSaat').value = A.saatler.join(', '); $('aTampon').value = A.tampon; $('aGunluk').value = A.gunlukUretim; $('aYt').checked = A.platformlar.youtube; $('aDemo').checked = A.demo; } }
+$('saveGemini').onclick = async () => { if (!$('geminiKey').value) return toast('Anahtarı yapıştır', true); const r = await api('/api/settings', { geminiKey: $('geminiKey').value, imageProvider: 'gemini' }); if (r) { $('geminiKey').value = ''; toast('Gemini anahtarı kaydedildi'); refresh(); } };
+$('saveSes').onclick = async () => { const r = await api('/api/settings', { sesSaglayici: sesSel, apiKey: $('elKey').value }); if (r) { $('elKey').value = ''; toast('Ses ayarı kaydedildi'); refresh(); } };
+$('saveYt').onclick = async () => { const r = await api('/api/app/yt-ayar', { clientId: $('ytId').value, clientSecret: $('ytSecret').value }); if (r) { $('ytSecret').value = ''; toast('Kaydedildi. Şimdi "Google ile bağlan"a bas.'); refresh(); } };
+const delKey = (id, ad, msg) => $(id).onclick = async () => { if (!confirm(msg)) return; const r = await api('/api/app/anahtar-sil', { ad }); if (r) { toast('Kaldırıldı'); if (ad === 'yt') $('ytId').value = ''; refresh(); } };
+delKey('delGemini', 'gemini', 'Gemini anahtarı kaldırılsın mı?'); delKey('delEl', 'elevenlabs', 'ElevenLabs anahtarı kaldırılsın mı?'); delKey('delYt', 'yt', 'YouTube bağlantısı ve anahtarları kaldırılsın mı?');
+$('connectYt').onclick = async () => { if (!Z.hazirlik.ytAyar) return toast('Önce Client ID ve Client Secret\'i kaydet', true); const r = await api('/api/app/yt-baglan'); if (r) location.href = r.url; };
+$('saveAuto').onclick = async () => { const r = await api('/api/app/ayarlar', { saatler: $('aSaat').value.split(',').map(x => x.trim()).filter(Boolean), tampon: $('aTampon').value, gunlukUretim: $('aGunluk').value, demo: $('aDemo').checked, platformlar: { youtube: $('aYt').checked } }); if (r) { toast('Ayarlar kaydedildi'); refresh(); } };
+
+if (/yt=ok/.test(location.search)) { history.replaceState(null, '', '/'); setTimeout(() => toast('YouTube hesabı bağlandı'), 400); }
+try { const v = localStorage.v; if (v && $(v)) view = v; } catch {} go(view);
+</script></body></html>

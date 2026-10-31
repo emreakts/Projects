@@ -1,0 +1,32 @@
+{
+  "dizi": "Bıdık ile Zıpır Al-Sat",
+  "kisa": "AL-SAT",
+  "kurgu": true,
+  "stil": "3D Pixar-style stylized cartoon, expressive faces, soft cinematic lighting, vibrant colors, shallow depth of field, vertical 9:16 composition, no text, no watermark, no logos",
+  "karakterler": {
+    "bidik": {
+      "ad": "Bıdık",
+      "renk": "#ffb547",
+      "ses": "",
+      "tarif": "short chubby man in his 30s, round friendly face, big smile, red baseball cap, yellow bomber jacket, dark jeans, white sneakers",
+      "edge": {
+        "ses": "tr-TR-AhmetNeural",
+        "hiz": "-4%",
+        "ton": "-14Hz",
+        "seviye": "+0%"
+      }
+    },
+    "zipir": {
+      "ad": "Zıpır",
+      "renk": "#5eead4",
+      "ses": "",
+      "tarif": "tall skinny man in his 30s, messy curly black hair, tiny round glasses, green hoodie, grey cargo pants, often worried expression",
+      "edge": {
+        "ses": "tr-TR-AhmetNeural",
+        "hiz": "+10%",
+        "ton": "+28Hz",
+        "seviye": "+0%"
+      }
+    }
+  }
+}
