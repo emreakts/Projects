@@ -1,0 +1,4 @@
+{
+  "_aciklama": "Kendi sunucuların. Anahtar = ülke kodu. 'config' = setup-server.sh'in ürettiği WireGuard istemci dosyası.",
+  "DE": {"ad": "Almanya (Frankfurt)", "config": "configs/DE.conf"}
+}
